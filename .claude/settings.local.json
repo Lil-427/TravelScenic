@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"d:\\\\Vue2Vue3学习\\\\景区项目\\\\test\" /b)",
+      "Bash(pnpm create *)",
+      "Bash(mv spot-detail.vue spot-detail-temp.vue)",
+      "Bash(mv spot-detail-temp.vue SpotDetail.vue)",
+      "Bash(mv profile.vue profile-temp.vue)",
+      "Bash(mv profile-temp.vue Profile.vue)",
+      "Bash(mv profile-info.vue profile-info-temp.vue)",
+      "Bash(mv profile-info-temp.vue ProfileInfo.vue)",
+      "Bash(mv profile-edit.vue profile-edit-temp.vue)",
+      "Bash(mv admin-layout.vue admin-layout-temp.vue)",
+      "Bash(mv admin-layout-temp.vue AdminLayout.vue)",
+      "Bash(mv admin-dashboard.vue admin-dashboard-temp.vue)",
+      "Bash(mv admin-dashboard-temp.vue AdminDashboard.vue)",
+      "Bash(mv admin-category.vue admin-category-temp.vue)",
+      "Bash(mv admin-category-temp.vue AdminCategory.vue)",
+      "Bash(mv admin-spot.vue admin-spot-temp.vue)",
+      "Bash(mv admin-spot-temp.vue AdminSpot.vue)",
+      "Bash(mv admin-user.vue admin-user-temp.vue)",
+      "Bash(mv admin-user-temp.vue AdminUser.vue)",
+      "Bash(mv admin-order.vue admin-order-temp.vue)",
+      "Bash(mv admin-order-temp.vue AdminOrder.vue)",
+      "Bash(mv admin-comment.vue admin-comment-temp.vue)",
+      "Bash(mv admin-comment-temp.vue AdminComment.vue)",
+      "Bash(npm run *)"
+    ]
+  }
+}

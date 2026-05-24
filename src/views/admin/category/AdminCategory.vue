@@ -1,3 +1,186 @@
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { Plus, Grid, TrendCharts, Location, Hide, Search } from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
+import { getCategoryList, getCategoryDetail, addCategory } from '@/api/admin/category'
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentCategoryId = ref(null)
+
+const dialogTitle = computed(() => (isEdit.value ? '编辑分类' : '新增分类'))
+
+const categoryFields = [
+  {
+    label: '分类名称',
+    prop: 'name',
+    type: 'input',
+    placeholder: '请输入分类名称'
+  },
+  {
+    label: '分类描述',
+    prop: 'desc',
+    type: 'textarea',
+    rows: 3,
+    placeholder: '请输入分类描述'
+  },
+  {
+    label: '排序序号',
+    prop: 'sort',
+    type: 'number',
+    placeholder: '请输入排序序号'
+  },
+  {
+    label: '状态',
+    prop: 'status',
+    type: 'select',
+    options: ['启用中', '已隐藏']
+  },
+  {
+    label: '分类图标URL',
+    prop: 'icon',
+    type: 'input',
+    placeholder: '请输入图标地址'
+  },
+  {
+    label: '封面图片URL',
+    prop: 'cover',
+    type: 'input',
+    fullWidth: true,
+    placeholder: '请输入封面地址'
+  }
+]
+
+const formData = reactive({
+  name: '',
+  desc: '',
+  sort: 0,
+  status: '启用中',
+  icon: '',
+  cover: ''
+})
+
+const categoryList = ref([])
+
+const hiddenCount = computed(() => {
+  return categoryList.value.filter((item) => item.status === 0).length
+})
+
+const openAddDialog = () => {
+  isEdit.value = false
+  currentCategoryId.value = null
+  resetFormData()
+  dialogVisible.value = true
+}
+
+const openEditDialog = async (category) => {
+  isEdit.value = true
+  currentCategoryId.value = category.id
+  //先清空内容
+  resetFormData()
+  //打开弹窗（先显示加载状态）
+  dialogVisible.value = true
+
+  try {
+    const res = await getCategoryDetail(category.id)
+    if (res.code === 200) {
+      const detail = res.data
+
+      formData.name = detail.category_name
+      formData.desc = detail.description
+      formData.sort = detail.sort_order
+      formData.status = detail.status === 1 ? '启用中' : '已隐藏'
+      formData.icon = detail.icon_url
+      formData.cover = detail.cover || ''
+    }
+  } catch (error) {
+    console.error('获取详情失败', error)
+  }
+}
+
+//获取分类列表
+const fetchCategoryList = async () => {
+  const params = {
+    page: currentPage.value,
+    size: pageSize.value
+  }
+  // TODO: 后续添加筛选条件时取消注释
+  // if (filterStatus.value !== '') {
+  //   params.status = parseInt(filterStatus.value)
+  // }
+
+  const res = await getCategoryList(params)
+
+  if (res.code === 200) {
+    categoryList.value = res.data.list
+    total.value = res.data.total
+    currentPage.value = res.data.page
+  }
+}
+
+//页面加载时获取列表
+onMounted(() => {
+  fetchCategoryList()
+})
+
+//分页切换
+const handlePageChange = (page) => {
+  currentPage.value = page
+  fetchCategoryList()
+}
+
+//添加分类
+const handleSubmit = async (data) => {
+  //名称校验
+  if ((!data.name || data.name, length < 2 || data.name.length > 50)) {
+    console.error('分类名称长度需要2-50之间')
+    return
+  }
+
+  try {
+    const submitData = {
+      category_name: data.name,
+      description: data.desc,
+      icon_url: data.icon,
+      sort_order: data.sort
+    }
+
+    let res
+    if (isEdit.value) {
+      //编辑
+      // res = await updateCategory(currentCategoryId.value, submitData)
+    } else {
+      res = await addCategory(submitData)
+    }
+
+    if (res.code === 200) {
+      //关闭弹窗
+      dialogVisible.value = false
+      console.log('添加成功')
+      //刷新列表
+      fetchCategoryList()
+    }
+  } catch (error) {
+    console.error('添加失败', error)
+  }
+}
+
+//清空弹窗内容
+const resetFormData = () => {
+  formData.name = ''
+  formData.desc = ''
+  formData.sort = 0
+  formData.status = '启用中'
+  formData.icon = ''
+  formData.cover = ''
+}
+</script>
+
 <template>
   <div class="page-container">
     <!-- 页面头部 -->
@@ -77,10 +260,8 @@
           <tr>
             <th>分类信息</th>
             <th>分类图标</th>
-            <th>景区数量</th>
             <th>排序</th>
             <th>状态</th>
-            <th>创建时间</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -92,37 +273,26 @@
                   <img :src="item.cover" />
                 </div>
                 <div>
-                  <h4>{{ item.name }}</h4>
-                  <p>{{ item.desc }}</p>
+                  <h4>{{ item.category_name }}</h4>
+                  <p>{{ item.description }}</p>
                 </div>
               </div>
             </td>
             <td>
               <div class="icon-preview">
-                <img :src="item.icon" />
+                <img :src="item.icon_url" />
               </div>
             </td>
+            <td>{{ item.sort_order }}</td>
             <td>
-              <span class="count">{{ item.count }} 个景区</span>
-            </td>
-            <td>{{ item.sort }}</td>
-            <td>
-              <span
-                class="status-tag"
-                :class="item.status === '启用中' ? 'success' : 'danger'"
-              >
-                {{ item.status }}
+              <span class="status-tag" :class="item.status === 1 ? 'success' : 'danger'">
+                {{ item.status === 1 ? '启用中' : '已隐藏' }}
               </span>
             </td>
-            <td>{{ item.createTime }}</td>
             <td>
               <div class="actions">
-                <button class="edit-btn" @click="openEditDialog(item)">
-                  编辑
-                </button>
-                <button class="delete-btn" @click="handleDelete(item)">
-                  删除
-                </button>
+                <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
@@ -133,7 +303,7 @@
         :total="total"
         :current="currentPage"
         :page-size="pageSize"
-        @update:current="currentPage = $event"
+        @update:current="handlePageChange"
       />
     </div>
 
@@ -144,206 +314,10 @@
       :fields="categoryFields"
       :form-data="formData"
       @submit="handleSubmit"
-      @close="handleCloseDialog"
+      @close="resetFormData"
     />
   </div>
 </template>
-
-<script setup>
-import { ref, reactive, computed } from "vue";
-import {
-  Plus,
-  Grid,
-  TrendCharts,
-  Location,
-  Hide,
-  Search,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
-
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(18);
-
-const dialogVisible = ref(false);
-const isEdit = ref(false);
-const currentCategoryId = ref(null);
-
-const dialogTitle = computed(() => (isEdit.value ? "编辑分类" : "新增分类"));
-
-const hiddenCount = computed(() => {
-  return categoryList.value.filter((item) => item.status === "已隐藏").length;
-});
-
-const categoryFields = [
-  {
-    label: "分类名称",
-    prop: "name",
-    type: "input",
-    placeholder: "请输入分类名称",
-  },
-  {
-    label: "分类描述",
-    prop: "desc",
-    type: "textarea",
-    rows: 3,
-    placeholder: "请输入分类描述",
-  },
-  {
-    label: "排序序号",
-    prop: "sort",
-    type: "number",
-    placeholder: "请输入排序序号",
-  },
-  {
-    label: "状态",
-    prop: "status",
-    type: "select",
-    options: ["启用中", "已隐藏"],
-  },
-  {
-    label: "分类图标URL",
-    prop: "icon",
-    type: "input",
-    placeholder: "请输入图标地址",
-  },
-  {
-    label: "封面图片URL",
-    prop: "cover",
-    type: "input",
-    fullWidth: true,
-    placeholder: "请输入封面地址",
-  },
-];
-
-const formData = reactive({
-  name: "",
-  desc: "",
-  sort: 0,
-  status: "启用中",
-  icon: "",
-  cover: "",
-});
-
-const categoryList = ref([
-  {
-    id: 1,
-    name: "自然风光",
-    desc: "山川湖泊等自然景观",
-    count: 36,
-    sort: 1,
-    status: "启用中",
-    createTime: "2024-06-01",
-    cover: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
-    icon: "https://cdn-icons-png.flaticon.com/512/427/427735.png",
-  },
-  {
-    id: 2,
-    name: "历史古迹",
-    desc: "文化遗址与古建筑",
-    count: 28,
-    sort: 2,
-    status: "启用中",
-    createTime: "2024-06-02",
-    cover: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=300",
-    icon: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
-  },
-  {
-    id: 3,
-    name: "主题乐园",
-    desc: "娱乐休闲主题景区",
-    count: 12,
-    sort: 3,
-    status: "已隐藏",
-    createTime: "2024-06-03",
-    cover: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
-    icon: "https://cdn-icons-png.flaticon.com/512/2436/2436636.png",
-  },
-]);
-
-const openAddDialog = () => {
-  isEdit.value = false;
-  currentCategoryId.value = null;
-  formData.name = "";
-  formData.desc = "";
-  formData.sort = 0;
-  formData.status = "启用中";
-  formData.icon = "";
-  formData.cover = "";
-  dialogVisible.value = true;
-};
-
-const openEditDialog = (category) => {
-  isEdit.value = true;
-  currentCategoryId.value = category.id;
-  formData.name = category.name;
-  formData.desc = category.desc;
-  formData.sort = category.sort;
-  formData.status = category.status;
-  formData.icon = category.icon;
-  formData.cover = category.cover;
-  dialogVisible.value = true;
-};
-
-const handleSubmit = (data) => {
-  const now = new Date().toISOString().slice(0, 10);
-
-  if (isEdit.value) {
-    const index = categoryList.value.findIndex(
-      (c) => c.id === currentCategoryId.value,
-    );
-    if (index !== -1) {
-      categoryList.value[index] = {
-        ...categoryList.value[index],
-        name: data.name,
-        desc: data.desc,
-        sort: data.sort,
-        status: data.status,
-        icon: data.icon,
-        cover: data.cover,
-      };
-    }
-  } else {
-    const newCategory = {
-      id: Date.now(),
-      name: data.name,
-      desc: data.desc,
-      count: 0,
-      sort: data.sort,
-      status: data.status,
-      createTime: now,
-      cover:
-        data.cover ||
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
-      icon:
-        data.icon || "https://cdn-icons-png.flaticon.com/512/427/427735.png",
-    };
-    categoryList.value.push(newCategory);
-    total.value++;
-  }
-  dialogVisible.value = false;
-};
-
-const handleDelete = (item) => {
-  if (confirm(`确定要删除分类「${item.name}」吗？`)) {
-    const index = categoryList.value.findIndex((c) => c.id === item.id);
-    if (index !== -1) {
-      categoryList.value.splice(index, 1);
-      total.value--;
-    }
-  }
-};
-
-const handleCloseDialog = () => {
-  formData.name = "";
-  formData.desc = "";
-  formData.sort = 0;
-  formData.status = "启用中";
-  formData.icon = "";
-  formData.cover = "";
-};
-</script>
 
 <style scoped>
 .page-container {

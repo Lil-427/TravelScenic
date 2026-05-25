@@ -8,6 +8,8 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import App from './App.vue'
 import router from './router'
 
+import './mock/category'
+
 const app = createApp(App)
 
 // 初始化 Pinia

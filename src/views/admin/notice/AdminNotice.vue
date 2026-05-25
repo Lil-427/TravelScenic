@@ -67,11 +67,7 @@
         <div class="filters">
           <div class="search-box">
             <el-icon><Search /></el-icon>
-            <input
-              v-model="searchKeyword"
-              placeholder="搜索公告标题"
-              @keyup.enter="handleSearch"
-            />
+            <input v-model="searchKeyword" placeholder="搜索公告标题" @keyup.enter="handleSearch" />
           </div>
 
           <select v-model="statusFilter" class="select">
@@ -125,7 +121,7 @@
                 :class="{
                   system: item.type === '系统通知',
                   active: item.type === '活动通知',
-                  operate: item.type === '运营公告',
+                  operate: item.type === '运营公告'
                 }"
               >
                 {{ item.type }}
@@ -141,7 +137,7 @@
                 :class="{
                   success: item.status === '已发布',
                   warning: item.status === '待发布',
-                  danger: item.status === '已下架',
+                  danger: item.status === '已下架'
                 }"
               >
                 {{ item.status }}
@@ -150,12 +146,8 @@
             <td>{{ item.publishTime }}</td>
             <td>
               <div class="actions">
-                <button class="edit-btn" @click="openEditDialog(item)">
-                  编辑
-                </button>
-                <button class="delete-btn" @click="handleDelete(item)">
-                  删除
-                </button>
+                <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
@@ -188,271 +180,255 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
-import {
-  Bell,
-  Promotion,
-  Clock,
-  CircleCloseFilled,
-  Search,
-  Plus,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
+import { ref, reactive, computed } from 'vue'
+import { Bell, Promotion, Clock, CircleCloseFilled, Search, Plus } from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
 
 // 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(86);
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(86)
 
 // 筛选条件
-const searchKeyword = ref("");
-const statusFilter = ref("");
-const typeFilter = ref("");
+const searchKeyword = ref('')
+const statusFilter = ref('')
+const typeFilter = ref('')
 
 // 弹窗相关
-const dialogVisible = ref(false);
-const isEdit = ref(false);
-const currentNoticeId = ref(null);
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentNoticeId = ref(null)
 
-const dialogTitle = computed(() => (isEdit.value ? "编辑公告" : "发布公告"));
+const dialogTitle = computed(() => (isEdit.value ? '编辑公告' : '发布公告'))
 
 // 统计数量
-const publishedCount = ref(72);
-const pendingCount = ref(8);
-const offlineCount = ref(6);
+const publishedCount = ref(72)
+const pendingCount = ref(8)
+const offlineCount = ref(6)
 
 // 弹窗字段配置（包含状态）
 const noticeFields = [
   {
-    label: "公告标题",
-    prop: "title",
-    type: "input",
-    placeholder: "请输入公告标题",
-    required: true,
+    label: '公告标题',
+    prop: 'title',
+    type: 'input',
+    placeholder: '请输入公告标题',
+    required: true
   },
   {
-    label: "公告描述",
-    prop: "desc",
-    type: "textarea",
+    label: '公告描述',
+    prop: 'desc',
+    type: 'textarea',
     rows: 2,
-    placeholder: "请输入公告简短描述",
+    placeholder: '请输入公告简短描述'
   },
   {
-    label: "公告类型",
-    prop: "type",
-    type: "select",
-    options: ["系统通知", "运营公告", "活动通知"],
+    label: '公告类型',
+    prop: 'type',
+    type: 'select',
+    options: ['系统通知', '运营公告', '活动通知']
   },
   {
-    label: "发布人",
-    prop: "author",
-    type: "input",
-    placeholder: "请输入发布人名称",
-    required: true,
+    label: '发布人',
+    prop: 'author',
+    type: 'input',
+    placeholder: '请输入发布人名称',
+    required: true
   },
   {
-    label: "状态",
-    prop: "status",
-    type: "select",
-    options: ["待发布", "已发布", "已下架"],
+    label: '状态',
+    prop: 'status',
+    type: 'select',
+    options: ['待发布', '已发布', '已下架']
   },
   {
-    label: "详细内容",
-    prop: "content",
-    type: "textarea",
+    label: '详细内容',
+    prop: 'content',
+    type: 'textarea',
     rows: 5,
-    placeholder: "请输入公告详细内容",
-    fullWidth: true,
+    placeholder: '请输入公告详细内容',
+    fullWidth: true
   },
   {
-    label: "封面图片URL",
-    prop: "cover",
-    type: "input",
-    placeholder: "请输入封面图片地址",
-    fullWidth: true,
-  },
-];
+    label: '封面图片URL',
+    prop: 'cover',
+    type: 'input',
+    placeholder: '请输入封面图片地址',
+    fullWidth: true
+  }
+]
 
 // 表单数据
 const formData = reactive({
-  title: "",
-  desc: "",
-  type: "系统通知",
-  author: "",
-  status: "待发布",
-  content: "",
-  cover: "",
-});
+  title: '',
+  desc: '',
+  type: '系统通知',
+  author: '',
+  status: '待发布',
+  content: '',
+  cover: ''
+})
 
 // 公告列表数据
 const noticeList = ref([
   {
     id: 1,
-    title: "关于系统维护升级的通知",
-    desc: "系统将于今晚 23:00 进行升级维护",
-    type: "系统通知",
-    author: "系统管理员",
-    views: "12.5K",
-    status: "已发布",
-    publishTime: "2024-06-07",
-    cover: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300",
-    content: "系统将于今晚 23:00 进行升级维护，届时部分功能可能暂时无法使用...",
+    title: '关于系统维护升级的通知',
+    desc: '系统将于今晚 23:00 进行升级维护',
+    type: '系统通知',
+    author: '系统管理员',
+    views: '12.5K',
+    status: '已发布',
+    publishTime: '2024-06-07',
+    cover: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300',
+    content: '系统将于今晚 23:00 进行升级维护，届时部分功能可能暂时无法使用...'
   },
   {
     id: 2,
-    title: "五一假期景区运营安排",
-    desc: "部分热门景区开放时间调整",
-    type: "运营公告",
-    author: "运营中心",
-    views: "8.2K",
-    status: "待发布",
-    publishTime: "2024-06-06",
-    cover: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300",
-    content: "五一假期期间，部分热门景区开放时间有所调整，请游客提前了解...",
+    title: '五一假期景区运营安排',
+    desc: '部分热门景区开放时间调整',
+    type: '运营公告',
+    author: '运营中心',
+    views: '8.2K',
+    status: '待发布',
+    publishTime: '2024-06-06',
+    cover: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300',
+    content: '五一假期期间，部分热门景区开放时间有所调整，请游客提前了解...'
   },
   {
     id: 3,
-    title: "夏季旅游活动上线通知",
-    desc: "平台推出暑期优惠活动专区",
-    type: "活动通知",
-    author: "活动策划部",
-    views: "18.9K",
-    status: "已下架",
-    publishTime: "2024-06-03",
-    cover: "https://images.unsplash.com/photo-1526778548025-fa2f459cd5ce?w=300",
-    content: "夏季旅游活动已上线，平台推出暑期优惠活动专区，欢迎参与...",
+    title: '夏季旅游活动上线通知',
+    desc: '平台推出暑期优惠活动专区',
+    type: '活动通知',
+    author: '活动策划部',
+    views: '18.9K',
+    status: '已下架',
+    publishTime: '2024-06-03',
+    cover: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5ce?w=300',
+    content: '夏季旅游活动已上线，平台推出暑期优惠活动专区，欢迎参与...'
   },
   {
     id: 4,
-    title: "景区门票价格调整通知",
-    desc: "部分景区门票价格将于下月起调整",
-    type: "系统通知",
-    author: "票务中心",
-    views: "5.6K",
-    status: "已发布",
-    publishTime: "2024-06-05",
-    cover: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300",
-    content: "接景区通知，部分景区门票价格将于下月起进行调整...",
+    title: '景区门票价格调整通知',
+    desc: '部分景区门票价格将于下月起调整',
+    type: '系统通知',
+    author: '票务中心',
+    views: '5.6K',
+    status: '已发布',
+    publishTime: '2024-06-05',
+    cover: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300',
+    content: '接景区通知，部分景区门票价格将于下月起进行调整...'
   },
   {
     id: 5,
-    title: "平台会员权益升级公告",
-    desc: "会员权益全面升级，新增多项特权",
-    type: "运营公告",
-    author: "产品部",
-    views: "9.3K",
-    status: "待发布",
-    publishTime: "2024-06-04",
-    cover: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300",
-    content: "平台会员权益全面升级，新增多项特权，敬请期待...",
-  },
-]);
+    title: '平台会员权益升级公告',
+    desc: '会员权益全面升级，新增多项特权',
+    type: '运营公告',
+    author: '产品部',
+    views: '9.3K',
+    status: '待发布',
+    publishTime: '2024-06-04',
+    cover: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300',
+    content: '平台会员权益全面升级，新增多项特权，敬请期待...'
+  }
+])
 
 // 筛选后的数据
 const filteredList = computed(() => {
-  let list = [...noticeList.value];
+  let list = [...noticeList.value]
 
   // 关键词筛选（标题/描述）
   if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase();
+    const keyword = searchKeyword.value.toLowerCase()
     list = list.filter(
       (item) =>
-        item.title.toLowerCase().includes(keyword) ||
-        item.desc.toLowerCase().includes(keyword),
-    );
+        item.title.toLowerCase().includes(keyword) || item.desc.toLowerCase().includes(keyword)
+    )
   }
 
   // 状态筛选
   if (statusFilter.value) {
-    list = list.filter((item) => item.status === statusFilter.value);
+    list = list.filter((item) => item.status === statusFilter.value)
   }
 
   // 类型筛选
   if (typeFilter.value) {
-    list = list.filter((item) => item.type === typeFilter.value);
+    list = list.filter((item) => item.type === typeFilter.value)
   }
 
-  return list;
-});
+  return list
+})
 
-const filteredTotal = computed(() => filteredList.value.length);
+const filteredTotal = computed(() => filteredList.value.length)
 
 // 当前页显示的数据
 const displayList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredList.value.slice(start, end);
-});
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredList.value.slice(start, end)
+})
 
 // 更新统计数量
 const updateStats = () => {
-  total.value = noticeList.value.length;
-  publishedCount.value = noticeList.value.filter(
-    (item) => item.status === "已发布",
-  ).length;
-  pendingCount.value = noticeList.value.filter(
-    (item) => item.status === "待发布",
-  ).length;
-  offlineCount.value = noticeList.value.filter(
-    (item) => item.status === "已下架",
-  ).length;
-};
+  total.value = noticeList.value.length
+  publishedCount.value = noticeList.value.filter((item) => item.status === '已发布').length
+  pendingCount.value = noticeList.value.filter((item) => item.status === '待发布').length
+  offlineCount.value = noticeList.value.filter((item) => item.status === '已下架').length
+}
 
 // 搜索
 const handleSearch = () => {
-  currentPage.value = 1;
-};
+  currentPage.value = 1
+}
 
 // 重置筛选
 const handleReset = () => {
-  searchKeyword.value = "";
-  statusFilter.value = "";
-  typeFilter.value = "";
-  currentPage.value = 1;
-};
+  searchKeyword.value = ''
+  statusFilter.value = ''
+  typeFilter.value = ''
+  currentPage.value = 1
+}
 
 // 分页切换
 const handlePageChange = (page) => {
-  currentPage.value = page;
-};
+  currentPage.value = page
+}
 
 // 新增公告
 const openAddDialog = () => {
-  isEdit.value = false;
-  currentNoticeId.value = null;
-  formData.title = "";
-  formData.desc = "";
-  formData.type = "系统通知";
-  formData.author = "";
-  formData.status = "待发布";
-  formData.content = "";
-  formData.cover = "";
-  dialogVisible.value = true;
-};
+  isEdit.value = false
+  currentNoticeId.value = null
+  formData.title = ''
+  formData.desc = ''
+  formData.type = '系统通知'
+  formData.author = ''
+  formData.status = '待发布'
+  formData.content = ''
+  formData.cover = ''
+  dialogVisible.value = true
+}
 
 // 编辑公告
 const openEditDialog = (item) => {
-  isEdit.value = true;
-  currentNoticeId.value = item.id;
-  formData.title = item.title;
-  formData.desc = item.desc;
-  formData.type = item.type;
-  formData.author = item.author;
-  formData.status = item.status;
-  formData.content = item.content || "";
-  formData.cover = item.cover;
-  dialogVisible.value = true;
-};
+  isEdit.value = true
+  currentNoticeId.value = item.id
+  formData.title = item.title
+  formData.desc = item.desc
+  formData.type = item.type
+  formData.author = item.author
+  formData.status = item.status
+  formData.content = item.content || ''
+  formData.cover = item.cover
+  dialogVisible.value = true
+}
 
 // 提交表单
 const handleSubmit = (data) => {
-  const now = new Date().toISOString().slice(0, 10);
+  const now = new Date().toISOString().slice(0, 10)
 
   if (isEdit.value) {
-    const index = noticeList.value.findIndex(
-      (n) => n.id === currentNoticeId.value,
-    );
+    const index = noticeList.value.findIndex((n) => n.id === currentNoticeId.value)
     if (index !== -1) {
       noticeList.value[index] = {
         ...noticeList.value[index],
@@ -462,54 +438,52 @@ const handleSubmit = (data) => {
         author: data.author,
         status: data.status,
         content: data.content,
-        cover: data.cover || noticeList.value[index].cover,
-      };
+        cover: data.cover || noticeList.value[index].cover
+      }
     }
   } else {
     const newNotice = {
       id: Date.now(),
       title: data.title,
-      desc: data.desc || "暂无描述",
+      desc: data.desc || '暂无描述',
       type: data.type,
       author: data.author,
-      views: "0",
-      status: data.status || "待发布",
+      views: '0',
+      status: data.status || '待发布',
       publishTime: now,
-      cover:
-        data.cover ||
-        "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300",
-      content: data.content || "",
-    };
-    noticeList.value.unshift(newNotice);
+      cover: data.cover || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300',
+      content: data.content || ''
+    }
+    noticeList.value.unshift(newNotice)
   }
-  updateStats();
-  dialogVisible.value = false;
-};
+  updateStats()
+  dialogVisible.value = false
+}
 
 // 关闭弹窗
 const handleCloseDialog = () => {
-  formData.title = "";
-  formData.desc = "";
-  formData.type = "系统通知";
-  formData.author = "";
-  formData.status = "待发布";
-  formData.content = "";
-  formData.cover = "";
-};
+  formData.title = ''
+  formData.desc = ''
+  formData.type = '系统通知'
+  formData.author = ''
+  formData.status = '待发布'
+  formData.content = ''
+  formData.cover = ''
+}
 
 // 删除公告
 const handleDelete = (item) => {
   if (confirm(`确定要删除公告「${item.title}」吗？删除后不可恢复！`)) {
-    const index = noticeList.value.findIndex((n) => n.id === item.id);
+    const index = noticeList.value.findIndex((n) => n.id === item.id)
     if (index !== -1) {
-      noticeList.value.splice(index, 1);
-      updateStats();
+      noticeList.value.splice(index, 1)
+      updateStats()
       if (displayList.value.length === 0 && currentPage.value > 1) {
-        currentPage.value--;
+        currentPage.value--
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>

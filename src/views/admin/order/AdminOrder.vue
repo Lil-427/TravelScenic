@@ -125,7 +125,7 @@
                 :class="{
                   success: item.status === '已支付',
                   warning: item.status === '待支付',
-                  danger: item.status === '已取消',
+                  danger: item.status === '已取消'
                 }"
               >
                 {{ item.status }}
@@ -135,12 +135,8 @@
             <td>{{ item.playDate }}</td>
             <td>
               <div class="actions">
-                <button class="detail-btn" @click="openDetailDialog(item)">
-                  详情
-                </button>
-                <button class="delete-btn" @click="handleDelete(item)">
-                  删除
-                </button>
+                <button class="detail-btn" @click="openDetailDialog(item)">详情</button>
+                <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
@@ -169,163 +165,163 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive } from 'vue'
 import {
   Tickets,
   ShoppingBag,
   WarningFilled,
   Coin,
   Search,
-  Download,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
+  Download
+} from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
 
 // 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(128);
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(128)
 
 // 弹窗相关
-const detailDialogVisible = ref(false);
-const currentOrderId = ref(null);
+const detailDialogVisible = ref(false)
+const currentOrderId = ref(null)
 
 // 订单表单数据（用于弹窗展示）
 const orderForm = reactive({
-  orderNo: "",
-  user: "",
-  phone: "",
-  scenic: "",
-  price: "",
-  status: "",
-  createTime: "",
-  playDate: "",
-  ticketCount: "",
-  totalAmount: "",
-  remark: "",
-});
+  orderNo: '',
+  user: '',
+  phone: '',
+  scenic: '',
+  price: '',
+  status: '',
+  createTime: '',
+  playDate: '',
+  ticketCount: '',
+  totalAmount: '',
+  remark: ''
+})
 
 // 订单详情弹窗字段配置（只读展示）
 const orderFields = [
-  { label: "订单号", prop: "orderNo", type: "input", disabled: true },
-  { label: "用户名称", prop: "user", type: "input", disabled: true },
-  { label: "手机号码", prop: "phone", type: "input", disabled: true },
-  { label: "景区名称", prop: "scenic", type: "input", disabled: true },
-  { label: "门票单价", prop: "price", type: "input", disabled: true },
-  { label: "购票数量", prop: "ticketCount", type: "input", disabled: true },
-  { label: "订单总额", prop: "totalAmount", type: "input", disabled: true },
+  { label: '订单号', prop: 'orderNo', type: 'input', disabled: true },
+  { label: '用户名称', prop: 'user', type: 'input', disabled: true },
+  { label: '手机号码', prop: 'phone', type: 'input', disabled: true },
+  { label: '景区名称', prop: 'scenic', type: 'input', disabled: true },
+  { label: '门票单价', prop: 'price', type: 'input', disabled: true },
+  { label: '购票数量', prop: 'ticketCount', type: 'input', disabled: true },
+  { label: '订单总额', prop: 'totalAmount', type: 'input', disabled: true },
   {
-    label: "支付状态",
-    prop: "status",
-    type: "select",
-    options: ["已支付", "待支付", "已取消"],
-    disabled: true,
+    label: '支付状态',
+    prop: 'status',
+    type: 'select',
+    options: ['已支付', '待支付', '已取消'],
+    disabled: true
   },
-  { label: "下单时间", prop: "createTime", type: "input", disabled: true },
-  { label: "游玩日期", prop: "playDate", type: "date", disabled: true },
+  { label: '下单时间', prop: 'createTime', type: 'input', disabled: true },
+  { label: '游玩日期', prop: 'playDate', type: 'date', disabled: true },
   {
-    label: "备注信息",
-    prop: "remark",
-    type: "textarea",
+    label: '备注信息',
+    prop: 'remark',
+    type: 'textarea',
     fullWidth: true,
     rows: 3,
-    disabled: true,
-  },
-];
+    disabled: true
+  }
+]
 
 // 订单列表数据
 const orderList = ref([
   {
     id: 1,
-    orderNo: "DD202406070001",
-    user: "张小明",
-    phone: "138****1234",
-    scenic: "九寨沟景区",
-    price: "268",
-    status: "已支付",
-    createTime: "2024-06-07 10:30",
-    playDate: "2024-06-10",
-    ticketCount: "2",
-    totalAmount: "536",
-    remark: "用户要求靠窗座位",
-    avatar: "https://randomuser.me/api/portraits/men/11.jpg",
-    cover: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200",
+    orderNo: 'DD202406070001',
+    user: '张小明',
+    phone: '138****1234',
+    scenic: '九寨沟景区',
+    price: '268',
+    status: '已支付',
+    createTime: '2024-06-07 10:30',
+    playDate: '2024-06-10',
+    ticketCount: '2',
+    totalAmount: '536',
+    remark: '用户要求靠窗座位',
+    avatar: 'https://randomuser.me/api/portraits/men/11.jpg',
+    cover: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200'
   },
   {
     id: 2,
-    orderNo: "DD202406070002",
-    user: "李雪",
-    phone: "139****5678",
-    scenic: "杭州西湖",
-    price: "128",
-    status: "待支付",
-    createTime: "2024-06-07 09:12",
-    playDate: "2024-06-11",
-    ticketCount: "1",
-    totalAmount: "128",
-    remark: "",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
-    cover: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=200",
+    orderNo: 'DD202406070002',
+    user: '李雪',
+    phone: '139****5678',
+    scenic: '杭州西湖',
+    price: '128',
+    status: '待支付',
+    createTime: '2024-06-07 09:12',
+    playDate: '2024-06-11',
+    ticketCount: '1',
+    totalAmount: '128',
+    remark: '',
+    avatar: 'https://randomuser.me/api/portraits/women/12.jpg',
+    cover: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=200'
   },
   {
     id: 3,
-    orderNo: "DD202406070003",
-    user: "王强",
-    phone: "156****9999",
-    scenic: "黄山风景区",
-    price: "399",
-    status: "已取消",
-    createTime: "2024-06-06 18:20",
-    playDate: "2024-06-15",
-    ticketCount: "3",
-    totalAmount: "1197",
-    remark: "用户申请退款，已处理",
-    avatar: "https://randomuser.me/api/portraits/men/15.jpg",
-    cover: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=200",
-  },
-]);
+    orderNo: 'DD202406070003',
+    user: '王强',
+    phone: '156****9999',
+    scenic: '黄山风景区',
+    price: '399',
+    status: '已取消',
+    createTime: '2024-06-06 18:20',
+    playDate: '2024-06-15',
+    ticketCount: '3',
+    totalAmount: '1197',
+    remark: '用户申请退款，已处理',
+    avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
+    cover: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=200'
+  }
+])
 
 // 打开订单详情弹窗
 const openDetailDialog = (order) => {
-  currentOrderId.value = order.id;
-  orderForm.orderNo = order.orderNo;
-  orderForm.user = order.user;
-  orderForm.phone = order.phone;
-  orderForm.scenic = order.scenic;
-  orderForm.price = order.price;
-  orderForm.status = order.status;
-  orderForm.createTime = order.createTime;
-  orderForm.playDate = order.playDate;
-  orderForm.ticketCount = order.ticketCount || "1";
-  orderForm.totalAmount = order.totalAmount || order.price;
-  orderForm.remark = order.remark || "";
-  detailDialogVisible.value = true;
-};
+  currentOrderId.value = order.id
+  orderForm.orderNo = order.orderNo
+  orderForm.user = order.user
+  orderForm.phone = order.phone
+  orderForm.scenic = order.scenic
+  orderForm.price = order.price
+  orderForm.status = order.status
+  orderForm.createTime = order.createTime
+  orderForm.playDate = order.playDate
+  orderForm.ticketCount = order.ticketCount || '1'
+  orderForm.totalAmount = order.totalAmount || order.price
+  orderForm.remark = order.remark || ''
+  detailDialogVisible.value = true
+}
 
 // 关闭弹窗
 const handleCloseDialog = () => {
   // 重置表单
   Object.keys(orderForm).forEach((key) => {
-    orderForm[key] = "";
-  });
-};
+    orderForm[key] = ''
+  })
+}
 
 // 删除订单
 const handleDelete = (item) => {
   if (confirm(`确定要删除订单「${item.orderNo}」吗？`)) {
-    const index = orderList.value.findIndex((o) => o.id === item.id);
+    const index = orderList.value.findIndex((o) => o.id === item.id)
     if (index !== -1) {
-      orderList.value.splice(index, 1);
-      total.value--;
+      orderList.value.splice(index, 1)
+      total.value--
     }
   }
-};
+}
 
 // 导出订单
 const handleExport = () => {
-  console.log("导出订单");
+  console.log('导出订单')
   // 后续实现导出功能
-};
+}
 </script>
 
 <style scoped>

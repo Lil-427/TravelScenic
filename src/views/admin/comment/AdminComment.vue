@@ -137,7 +137,7 @@
                 :class="{
                   success: item.status === '已通过',
                   warning: item.status === '待审核',
-                  danger: item.status === '已屏蔽',
+                  danger: item.status === '已屏蔽'
                 }"
               >
                 {{ item.status }}
@@ -148,12 +148,8 @@
               <div class="actions">
                 <!-- 待审核状态：显示通过和屏蔽按钮 -->
                 <template v-if="item.status === '待审核'">
-                  <button class="pass-btn" @click="handleApprove(item)">
-                    通过
-                  </button>
-                  <button class="block-btn" @click="handleBlock(item)">
-                    屏蔽
-                  </button>
+                  <button class="pass-btn" @click="handleApprove(item)">通过</button>
+                  <button class="block-btn" @click="handleBlock(item)">屏蔽</button>
                 </template>
                 <!-- 已通过状态：显示屏蔽按钮 -->
                 <button
@@ -203,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed } from 'vue'
 import {
   ChatDotRound,
   ChatLineRound,
@@ -211,245 +207,238 @@ import {
   CircleCloseFilled,
   Search,
   Download,
-  StarFilled,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
+  StarFilled
+} from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
 
 // 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(8526);
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(8526)
 
 // 筛选条件
-const searchKeyword = ref("");
-const statusFilter = ref("");
-const scoreFilter = ref("");
+const searchKeyword = ref('')
+const statusFilter = ref('')
+const scoreFilter = ref('')
 
 // 弹窗相关
-const dialogVisible = ref(false);
-const dialogTitle = ref("");
-const currentAction = ref(""); // 'approve', 'block'
-const currentCommentItem = ref(null);
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const currentAction = ref('') // 'approve', 'block'
+const currentCommentItem = ref(null)
 
 // 统计数量
-const todayCount = ref(268);
-const pendingCount = ref(32);
-const blockedCount = ref(6);
+const todayCount = ref(268)
+const pendingCount = ref(32)
+const blockedCount = ref(6)
 
 // 弹窗字段配置（只有备注说明）
 const auditFields = [
   {
-    label: "用户",
-    prop: "user",
-    type: "input",
-    disabled: true,
+    label: '用户',
+    prop: 'user',
+    type: 'input',
+    disabled: true
   },
   {
-    label: "评论内容",
-    prop: "originalContent",
-    type: "textarea",
+    label: '评论内容',
+    prop: 'originalContent',
+    type: 'textarea',
     rows: 3,
-    disabled: true,
+    disabled: true
   },
   {
-    label: "操作说明",
-    prop: "remark",
-    type: "textarea",
+    label: '操作说明',
+    prop: 'remark',
+    type: 'textarea',
     rows: 2,
-    placeholder: "请输入审核备注（选填）",
-  },
-];
+    placeholder: '请输入审核备注（选填）'
+  }
+]
 
 // 表单数据
 const formData = reactive({
-  user: "",
-  originalContent: "",
-  remark: "",
-});
+  user: '',
+  originalContent: '',
+  remark: ''
+})
 
 // 评论列表数据
 const commentList = ref([
   {
     id: 1,
-    user: "张小明",
-    phone: "138****1234",
-    scenic: "九寨沟景区",
-    score: "5.0",
-    status: "已通过",
-    createTime: "2024-06-07 10:30",
-    content: "景区环境特别漂亮，体验感非常好，下次还会再来。",
-    avatar: "https://randomuser.me/api/portraits/men/11.jpg",
+    user: '张小明',
+    phone: '138****1234',
+    scenic: '九寨沟景区',
+    score: '5.0',
+    status: '已通过',
+    createTime: '2024-06-07 10:30',
+    content: '景区环境特别漂亮，体验感非常好，下次还会再来。',
+    avatar: 'https://randomuser.me/api/portraits/men/11.jpg'
   },
   {
     id: 2,
-    user: "李雪",
-    phone: "139****5678",
-    scenic: "杭州西湖",
-    score: "4.5",
-    status: "待审核",
-    createTime: "2024-06-07 09:12",
-    content: "风景不错，但是节假日游客有点多。",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
+    user: '李雪',
+    phone: '139****5678',
+    scenic: '杭州西湖',
+    score: '4.5',
+    status: '待审核',
+    createTime: '2024-06-07 09:12',
+    content: '风景不错，但是节假日游客有点多。',
+    avatar: 'https://randomuser.me/api/portraits/women/12.jpg'
   },
   {
     id: 3,
-    user: "王强",
-    phone: "156****9999",
-    scenic: "黄山风景区",
-    score: "2.0",
-    status: "已屏蔽",
-    createTime: "2024-06-06 18:20",
-    content: "评论内容涉嫌违规，已被系统屏蔽。",
-    avatar: "https://randomuser.me/api/portraits/men/15.jpg",
+    user: '王强',
+    phone: '156****9999',
+    scenic: '黄山风景区',
+    score: '2.0',
+    status: '已屏蔽',
+    createTime: '2024-06-06 18:20',
+    content: '评论内容涉嫌违规，已被系统屏蔽。',
+    avatar: 'https://randomuser.me/api/portraits/men/15.jpg'
   },
   {
     id: 4,
-    user: "赵丽颖",
-    phone: "177****2345",
-    scenic: "故宫博物院",
-    score: "5.0",
-    status: "已通过",
-    createTime: "2024-06-07 08:45",
-    content: "历史文化底蕴深厚，非常震撼，强烈推荐！",
-    avatar: "https://randomuser.me/api/portraits/women/20.jpg",
+    user: '赵丽颖',
+    phone: '177****2345',
+    scenic: '故宫博物院',
+    score: '5.0',
+    status: '已通过',
+    createTime: '2024-06-07 08:45',
+    content: '历史文化底蕴深厚，非常震撼，强烈推荐！',
+    avatar: 'https://randomuser.me/api/portraits/women/20.jpg'
   },
   {
     id: 5,
-    user: "陈伟",
-    phone: "188****3456",
-    scenic: "张家界",
-    score: "4.0",
-    status: "待审核",
-    createTime: "2024-06-07 07:30",
-    content: "风景很美，但是门票有点贵。",
-    avatar: "https://randomuser.me/api/portraits/men/25.jpg",
-  },
-]);
+    user: '陈伟',
+    phone: '188****3456',
+    scenic: '张家界',
+    score: '4.0',
+    status: '待审核',
+    createTime: '2024-06-07 07:30',
+    content: '风景很美，但是门票有点贵。',
+    avatar: 'https://randomuser.me/api/portraits/men/25.jpg'
+  }
+])
 
 // 筛选后的数据
 const filteredList = computed(() => {
-  let list = [...commentList.value];
+  let list = [...commentList.value]
 
   if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase();
+    const keyword = searchKeyword.value.toLowerCase()
     list = list.filter(
       (item) =>
-        item.content.toLowerCase().includes(keyword) ||
-        item.user.toLowerCase().includes(keyword),
-    );
+        item.content.toLowerCase().includes(keyword) || item.user.toLowerCase().includes(keyword)
+    )
   }
 
   if (statusFilter.value) {
-    list = list.filter((item) => item.status === statusFilter.value);
+    list = list.filter((item) => item.status === statusFilter.value)
   }
 
   if (scoreFilter.value) {
-    const minScore = parseInt(scoreFilter.value);
-    list = list.filter((item) => parseFloat(item.score) >= minScore);
+    const minScore = parseInt(scoreFilter.value)
+    list = list.filter((item) => parseFloat(item.score) >= minScore)
   }
 
-  return list;
-});
+  return list
+})
 
-const filteredTotal = computed(() => filteredList.value.length);
+const filteredTotal = computed(() => filteredList.value.length)
 
 const displayList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredList.value.slice(start, end);
-});
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredList.value.slice(start, end)
+})
 
 // 更新统计数量
 const updateStats = () => {
-  total.value = commentList.value.length;
-  pendingCount.value = commentList.value.filter(
-    (item) => item.status === "待审核",
-  ).length;
-  blockedCount.value = commentList.value.filter(
-    (item) => item.status === "已屏蔽",
-  ).length;
-};
+  total.value = commentList.value.length
+  pendingCount.value = commentList.value.filter((item) => item.status === '待审核').length
+  blockedCount.value = commentList.value.filter((item) => item.status === '已屏蔽').length
+}
 
 // 搜索
 const handleSearch = () => {
-  currentPage.value = 1;
-};
+  currentPage.value = 1
+}
 
 // 重置筛选
 const handleReset = () => {
-  searchKeyword.value = "";
-  statusFilter.value = "";
-  scoreFilter.value = "";
-  currentPage.value = 1;
-};
+  searchKeyword.value = ''
+  statusFilter.value = ''
+  scoreFilter.value = ''
+  currentPage.value = 1
+}
 
 // 分页切换
 const handlePageChange = (page) => {
-  currentPage.value = page;
-};
+  currentPage.value = page
+}
 
 // 打开审核弹窗（通过）
 const handleApprove = (item) => {
-  currentAction.value = "approve";
-  currentCommentItem.value = item;
-  dialogTitle.value = "审核通过";
-  formData.user = item.user;
-  formData.originalContent = item.content;
-  formData.remark = "";
-  dialogVisible.value = true;
-};
+  currentAction.value = 'approve'
+  currentCommentItem.value = item
+  dialogTitle.value = '审核通过'
+  formData.user = item.user
+  formData.originalContent = item.content
+  formData.remark = ''
+  dialogVisible.value = true
+}
 
 // 屏蔽评论
 const handleBlock = (item) => {
-  currentAction.value = "block";
-  currentCommentItem.value = item;
-  dialogTitle.value = "屏蔽评论";
-  formData.user = item.user;
-  formData.originalContent = item.content;
-  formData.remark = "";
-  dialogVisible.value = true;
-};
+  currentAction.value = 'block'
+  currentCommentItem.value = item
+  dialogTitle.value = '屏蔽评论'
+  formData.user = item.user
+  formData.originalContent = item.content
+  formData.remark = ''
+  dialogVisible.value = true
+}
 
 // 恢复评论（从屏蔽恢复为已通过）
 const handleRestore = (item) => {
   if (confirm(`确定要恢复用户「${item.user}」的评论吗？`)) {
-    const index = commentList.value.findIndex((c) => c.id === item.id);
+    const index = commentList.value.findIndex((c) => c.id === item.id)
     if (index !== -1) {
-      commentList.value[index].status = "已通过";
-      updateStats();
+      commentList.value[index].status = '已通过'
+      updateStats()
     }
   }
-};
+}
 
 // 提交审核
 const handleAuditSubmit = (data) => {
-  const index = commentList.value.findIndex(
-    (c) => c.id === currentCommentItem.value.id,
-  );
+  const index = commentList.value.findIndex((c) => c.id === currentCommentItem.value.id)
   if (index !== -1) {
-    if (currentAction.value === "approve") {
-      commentList.value[index].status = "已通过";
-    } else if (currentAction.value === "block") {
-      commentList.value[index].status = "已屏蔽";
+    if (currentAction.value === 'approve') {
+      commentList.value[index].status = '已通过'
+    } else if (currentAction.value === 'block') {
+      commentList.value[index].status = '已屏蔽'
     }
-    updateStats();
+    updateStats()
   }
-  dialogVisible.value = false;
-};
+  dialogVisible.value = false
+}
 
 // 关闭弹窗
 const handleCloseDialog = () => {
-  formData.user = "";
-  formData.originalContent = "";
-  formData.remark = "";
-  currentCommentItem.value = null;
-};
+  formData.user = ''
+  formData.originalContent = ''
+  formData.remark = ''
+  currentCommentItem.value = null
+}
 
 // 导出评论
 const handleExport = () => {
-  alert(`共导出 ${total.value} 条评论数据`);
-};
+  alert(`共导出 ${total.value} 条评论数据`)
+}
 </script>
 
 <style scoped>

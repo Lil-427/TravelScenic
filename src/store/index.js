@@ -9,5 +9,5 @@ export const useAppStore = defineStore('app', {
   },
   getters: {
     // getters
-  },
+  }
 })

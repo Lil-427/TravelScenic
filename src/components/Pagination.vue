@@ -1,5 +1,5 @@
 <template>
-  <div class="pagination-wrapper">
+  <div class="pagination-wrapper" v-if="total > 0">
     <div class="pagination">
       <span class="total">共 {{ total }} 条</span>
       <div class="page-group">
@@ -42,7 +42,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:current', 'change'])
+const emit = defineEmits(['update:current'])
 
 const totalPages = computed(() => Math.ceil(props.total / props.pageSize))
 
@@ -76,7 +76,6 @@ const handlePrev = () => {
   if (props.current > 1) {
     const newPage = props.current - 1
     emit('update:current', newPage)
-    emit('change', newPage)
   }
 }
 
@@ -84,14 +83,12 @@ const handleNext = () => {
   if (props.current < totalPages.value) {
     const newPage = props.current + 1
     emit('update:current', newPage)
-    emit('change', newPage)
   }
 }
 
 const handlePageChange = (page) => {
   if (page !== props.current) {
     emit('update:current', page)
-    emit('change', page)
   }
 }
 </script>

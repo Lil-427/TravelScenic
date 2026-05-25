@@ -99,10 +99,7 @@
             </td>
             <td>{{ item.phone }}</td>
             <td>
-              <span
-                class="status-tag"
-                :class="item.status === '正常' ? 'success' : 'danger'"
-              >
+              <span class="status-tag" :class="item.status === '正常' ? 'success' : 'danger'">
                 {{ item.status }}
               </span>
             </td>
@@ -110,12 +107,8 @@
             <td>{{ item.lastLogin }}</td>
             <td>
               <div class="action-group">
-                <button class="edit-btn" @click="openEditDialog(item)">
-                  编辑
-                </button>
-                <button class="delete-btn" @click="handleDelete(item)">
-                  删除
-                </button>
+                <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
@@ -147,147 +140,140 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
-import {
-  Plus,
-  Search,
-  Filter,
-  User,
-  DataAnalysis,
-  WarningFilled,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
+import { ref, reactive, computed } from 'vue'
+import { Plus, Search, Filter, User, DataAnalysis, WarningFilled } from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
 
 // 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(68);
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(68)
 
 // 弹窗相关
-const dialogVisible = ref(false);
-const isEdit = ref(false);
-const currentUserId = ref(null);
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentUserId = ref(null)
 
 // 弹窗标题
-const dialogTitle = computed(() => (isEdit.value ? "编辑用户" : "新增用户"));
+const dialogTitle = computed(() => (isEdit.value ? '编辑用户' : '新增用户'))
 
 // 表单字段配置
 const userFields = [
   {
-    label: "用户昵称",
-    prop: "name",
-    type: "input",
-    placeholder: "请输入用户昵称",
+    label: '用户昵称',
+    prop: 'name',
+    type: 'input',
+    placeholder: '请输入用户昵称'
   },
   {
-    label: "手机号码",
-    prop: "phone",
-    type: "input",
-    placeholder: "请输入手机号码",
+    label: '手机号码',
+    prop: 'phone',
+    type: 'input',
+    placeholder: '请输入手机号码'
   },
   {
-    label: "邮箱地址",
-    prop: "email",
-    type: "input",
-    placeholder: "请输入邮箱地址",
+    label: '邮箱地址',
+    prop: 'email',
+    type: 'input',
+    placeholder: '请输入邮箱地址'
   },
   {
-    label: "账号状态",
-    prop: "status",
-    type: "select",
-    options: ["正常", "冻结"],
+    label: '账号状态',
+    prop: 'status',
+    type: 'select',
+    options: ['正常', '冻结']
   },
   {
-    label: "备注信息",
-    prop: "remark",
-    type: "textarea",
+    label: '备注信息',
+    prop: 'remark',
+    type: 'textarea',
     fullWidth: true,
     rows: 4,
-    placeholder: "请输入备注内容",
-  },
-];
+    placeholder: '请输入备注内容'
+  }
+]
 
 // 表单数据
 const formData = reactive({
-  name: "",
-  phone: "",
-  email: "",
-  status: "正常",
-  remark: "",
-  avatar: "",
-});
+  name: '',
+  phone: '',
+  email: '',
+  status: '正常',
+  remark: '',
+  avatar: ''
+})
 
 // 用户列表数据
 const userList = ref([
   {
     id: 1,
-    name: "张小明",
-    email: "zhang@example.com",
-    phone: "138****1234",
-    status: "正常",
-    registerTime: "2024-06-01",
-    lastLogin: "2024-06-07 10:30",
-    avatar: "https://randomuser.me/api/portraits/men/11.jpg",
-    remark: "活跃用户",
+    name: '张小明',
+    email: 'zhang@example.com',
+    phone: '138****1234',
+    status: '正常',
+    registerTime: '2024-06-01',
+    lastLogin: '2024-06-07 10:30',
+    avatar: 'https://randomuser.me/api/portraits/men/11.jpg',
+    remark: '活跃用户'
   },
   {
     id: 2,
-    name: "李雪",
-    email: "li@example.com",
-    phone: "139****5678",
-    status: "正常",
-    registerTime: "2024-05-20",
-    lastLogin: "2024-06-07 08:12",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
-    remark: "VIP会员",
+    name: '李雪',
+    email: 'li@example.com',
+    phone: '139****5678',
+    status: '正常',
+    registerTime: '2024-05-20',
+    lastLogin: '2024-06-07 08:12',
+    avatar: 'https://randomuser.me/api/portraits/women/12.jpg',
+    remark: 'VIP会员'
   },
   {
     id: 3,
-    name: "王强",
-    email: "wang@example.com",
-    phone: "156****9999",
-    status: "冻结",
-    registerTime: "2024-05-11",
-    lastLogin: "2024-06-05 18:20",
-    avatar: "https://randomuser.me/api/portraits/men/15.jpg",
-    remark: "违规操作冻结",
-  },
-]);
+    name: '王强',
+    email: 'wang@example.com',
+    phone: '156****9999',
+    status: '冻结',
+    registerTime: '2024-05-11',
+    lastLogin: '2024-06-05 18:20',
+    avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
+    remark: '违规操作冻结'
+  }
+])
 
 // 打开新增弹窗
 const openAddDialog = () => {
-  isEdit.value = false;
-  currentUserId.value = null;
+  isEdit.value = false
+  currentUserId.value = null
   // 重置表单
-  formData.name = "";
-  formData.phone = "";
-  formData.email = "";
-  formData.status = "正常";
-  formData.remark = "";
-  formData.avatar = "";
-  dialogVisible.value = true;
-};
+  formData.name = ''
+  formData.phone = ''
+  formData.email = ''
+  formData.status = '正常'
+  formData.remark = ''
+  formData.avatar = ''
+  dialogVisible.value = true
+}
 
 // 打开编辑弹窗
 const openEditDialog = (user) => {
-  isEdit.value = true;
-  currentUserId.value = user.id;
+  isEdit.value = true
+  currentUserId.value = user.id
   // 填充表单
-  formData.name = user.name;
-  formData.phone = user.phone;
-  formData.email = user.email;
-  formData.status = user.status;
-  formData.remark = user.remark || "";
-  formData.avatar = user.avatar;
-  dialogVisible.value = true;
-};
+  formData.name = user.name
+  formData.phone = user.phone
+  formData.email = user.email
+  formData.status = user.status
+  formData.remark = user.remark || ''
+  formData.avatar = user.avatar
+  dialogVisible.value = true
+}
 
 // 提交表单
 const handleSubmit = (data) => {
   if (isEdit.value) {
     // 编辑用户
-    const index = userList.value.findIndex((u) => u.id === currentUserId.value);
+    const index = userList.value.findIndex((u) => u.id === currentUserId.value)
     if (index !== -1) {
       userList.value[index] = {
         ...userList.value[index],
@@ -295,8 +281,8 @@ const handleSubmit = (data) => {
         phone: data.phone,
         email: data.email,
         status: data.status,
-        remark: data.remark,
-      };
+        remark: data.remark
+      }
     }
   } else {
     // 新增用户
@@ -307,37 +293,37 @@ const handleSubmit = (data) => {
       phone: data.phone,
       status: data.status,
       registerTime: new Date().toISOString().slice(0, 10),
-      lastLogin: "-",
-      avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? "men" : "women"}/${Math.floor(Math.random() * 50) + 1}.jpg`,
-      remark: data.remark,
-    };
-    userList.value.unshift(newUser);
-    total.value++;
+      lastLogin: '-',
+      avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 50) + 1}.jpg`,
+      remark: data.remark
+    }
+    userList.value.unshift(newUser)
+    total.value++
   }
-  dialogVisible.value = false;
-};
+  dialogVisible.value = false
+}
 
 // 删除用户
 const handleDelete = (item) => {
   if (confirm(`确定要删除用户「${item.name}」吗？`)) {
-    const index = userList.value.findIndex((u) => u.id === item.id);
+    const index = userList.value.findIndex((u) => u.id === item.id)
     if (index !== -1) {
-      userList.value.splice(index, 1);
-      total.value--;
+      userList.value.splice(index, 1)
+      total.value--
     }
   }
-};
+}
 
 // 关闭弹窗
 const handleCloseDialog = () => {
   // 重置表单
-  formData.name = "";
-  formData.phone = "";
-  formData.email = "";
-  formData.status = "正常";
-  formData.remark = "";
-  formData.avatar = "";
-};
+  formData.name = ''
+  formData.phone = ''
+  formData.email = ''
+  formData.status = '正常'
+  formData.remark = ''
+  formData.avatar = ''
+}
 </script>
 
 <style scoped>

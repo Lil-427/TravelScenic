@@ -24,10 +24,7 @@
       </div>
 
       <div class="sidebar-banner">
-        <img
-          src="../../../assets/banner-watercolor.png"
-          class="sidebar-banner-img"
-        />
+        <img src="../../../assets/banner-watercolor.png" class="sidebar-banner-img" />
         <div class="sidebar-text">
           <h3>探索自然之美</h3>
           <p>开启美好旅程</p>
@@ -42,10 +39,7 @@
         <div class="topbar">
           <div></div>
           <div class="top-right">
-            <img
-              class="avatar"
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-            />
+            <img class="avatar" src="https://randomuser.me/api/portraits/men/32.jpg" />
             <span class="admin-name">管理员</span>
           </div>
         </div>
@@ -69,20 +63,20 @@ import {
   ChatDotRound,
   Notebook,
   UserFilled,
-  Bell,
-} from "@element-plus/icons-vue";
+  Bell
+} from '@element-plus/icons-vue'
 
 const menuItems = [
-  { name: "adminDashboard", label: "首页", icon: House },
-  { name: "adminUser", label: "用户管理", icon: User },
-  { name: "adminOrder", label: "订单管理", icon: Tickets },
-  { name: "adminSpot", label: "景区管理", icon: Location },
-  { name: "adminCategory", label: "景区分类", icon: Grid },
-  { name: "adminComment", label: "评论管理", icon: ChatDotRound },
-  { name: "adminGuide", label: "攻略管理", icon: Notebook },
-  { name: "adminAdmin", label: "管理员管理", icon: UserFilled },
-  { name: "adminNotice", label: "公告管理", icon: Bell },
-];
+  { name: 'adminDashboard', label: '首页', icon: House },
+  { name: 'adminUser', label: '用户管理', icon: User },
+  { name: 'adminOrder', label: '订单管理', icon: Tickets },
+  { name: 'adminSpot', label: '景区管理', icon: Location },
+  { name: 'adminCategory', label: '景区分类', icon: Grid },
+  { name: 'adminComment', label: '评论管理', icon: ChatDotRound },
+  { name: 'adminGuide', label: '攻略管理', icon: Notebook },
+  { name: 'adminAdmin', label: '管理员管理', icon: UserFilled },
+  { name: 'adminNotice', label: '公告管理', icon: Bell }
+]
 </script>
 
 <style scoped>
@@ -96,7 +90,7 @@ const menuItems = [
   display: flex;
   min-height: 100vh;
   background: #ffffff;
-  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 /* ========= 左侧菜单样式 ========= */

@@ -112,7 +112,7 @@
                 class="role-tag"
                 :class="{
                   super: item.role === '超级管理员',
-                  normal: item.role !== '超级管理员',
+                  normal: item.role !== '超级管理员'
                 }"
               >
                 {{ item.role }}
@@ -121,22 +121,15 @@
             <td>{{ item.phone }}</td>
             <td>{{ item.lastLogin }}</td>
             <td>
-              <span
-                class="status-tag"
-                :class="item.status === '正常' ? 'success' : 'danger'"
-              >
+              <span class="status-tag" :class="item.status === '正常' ? 'success' : 'danger'">
                 {{ item.status }}
               </span>
             </td>
             <td>{{ item.createTime }}</td>
             <td>
               <div class="actions">
-                <button class="edit-btn" @click="openEditDialog(item)">
-                  编辑
-                </button>
-                <button class="delete-btn" @click="handleDelete(item)">
-                  删除
-                </button>
+                <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
@@ -166,163 +159,159 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed } from 'vue'
 import {
   UserFilled,
   Avatar,
   Monitor,
   CircleCloseFilled,
   Search,
-  Plus,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
+  Plus
+} from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
 
 // 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(18);
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(18)
 
 // 弹窗相关
-const dialogVisible = ref(false);
-const isEdit = ref(false);
-const currentAdminId = ref(null);
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentAdminId = ref(null)
 
 // 弹窗标题
-const dialogTitle = computed(() =>
-  isEdit.value ? "编辑管理员" : "新增管理员",
-);
+const dialogTitle = computed(() => (isEdit.value ? '编辑管理员' : '新增管理员'))
 
 // 禁用账号数量
 const disabledCount = computed(() => {
-  return adminList.value.filter((item) => item.status === "已禁用").length;
-});
+  return adminList.value.filter((item) => item.status === '已禁用').length
+})
 
 // 表单字段配置
 const adminFields = [
   {
-    label: "管理员名称",
-    prop: "name",
-    type: "input",
-    placeholder: "请输入管理员名称",
+    label: '管理员名称',
+    prop: 'name',
+    type: 'input',
+    placeholder: '请输入管理员名称'
   },
   {
-    label: "邮箱地址",
-    prop: "email",
-    type: "input",
-    placeholder: "请输入邮箱地址",
+    label: '邮箱地址',
+    prop: 'email',
+    type: 'input',
+    placeholder: '请输入邮箱地址'
   },
   {
-    label: "手机号码",
-    prop: "phone",
-    type: "input",
-    placeholder: "请输入手机号码",
+    label: '手机号码',
+    prop: 'phone',
+    type: 'input',
+    placeholder: '请输入手机号码'
   },
   {
-    label: "角色权限",
-    prop: "role",
-    type: "select",
-    options: ["超级管理员", "运营管理员", "审核管理员"],
+    label: '角色权限',
+    prop: 'role',
+    type: 'select',
+    options: ['超级管理员', '运营管理员', '审核管理员']
   },
   {
-    label: "账号状态",
-    prop: "status",
-    type: "select",
-    options: ["正常", "已禁用"],
+    label: '账号状态',
+    prop: 'status',
+    type: 'select',
+    options: ['正常', '已禁用']
   },
   {
-    label: "备注信息",
-    prop: "remark",
-    type: "textarea",
+    label: '备注信息',
+    prop: 'remark',
+    type: 'textarea',
     fullWidth: true,
     rows: 3,
-    placeholder: "请输入备注信息",
-  },
-];
+    placeholder: '请输入备注信息'
+  }
+]
 
 // 表单数据
 const formData = reactive({
-  name: "",
-  email: "",
-  phone: "",
-  role: "运营管理员",
-  status: "正常",
-  remark: "",
-});
+  name: '',
+  email: '',
+  phone: '',
+  role: '运营管理员',
+  status: '正常',
+  remark: ''
+})
 
 // 管理员列表数据
 const adminList = ref([
   {
     id: 1,
-    name: "系统管理员",
-    email: "admin@example.com",
-    role: "超级管理员",
-    phone: "138****1234",
-    status: "正常",
-    lastLogin: "2024-06-07 10:30",
-    createTime: "2024-01-01",
-    avatar: "https://randomuser.me/api/portraits/men/11.jpg",
-    remark: "系统初始管理员",
+    name: '系统管理员',
+    email: 'admin@example.com',
+    role: '超级管理员',
+    phone: '138****1234',
+    status: '正常',
+    lastLogin: '2024-06-07 10:30',
+    createTime: '2024-01-01',
+    avatar: 'https://randomuser.me/api/portraits/men/11.jpg',
+    remark: '系统初始管理员'
   },
   {
     id: 2,
-    name: "运营主管",
-    email: "operate@example.com",
-    role: "运营管理员",
-    phone: "139****5678",
-    status: "正常",
-    lastLogin: "2024-06-07 09:20",
-    createTime: "2024-02-10",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
-    remark: "负责日常运营",
+    name: '运营主管',
+    email: 'operate@example.com',
+    role: '运营管理员',
+    phone: '139****5678',
+    status: '正常',
+    lastLogin: '2024-06-07 09:20',
+    createTime: '2024-02-10',
+    avatar: 'https://randomuser.me/api/portraits/women/12.jpg',
+    remark: '负责日常运营'
   },
   {
     id: 3,
-    name: "审核专员",
-    email: "review@example.com",
-    role: "审核管理员",
-    phone: "156****9999",
-    status: "已禁用",
-    lastLogin: "2024-06-05 18:20",
-    createTime: "2024-03-15",
-    avatar: "https://randomuser.me/api/portraits/men/15.jpg",
-    remark: "违规操作被禁用",
-  },
-]);
+    name: '审核专员',
+    email: 'review@example.com',
+    role: '审核管理员',
+    phone: '156****9999',
+    status: '已禁用',
+    lastLogin: '2024-06-05 18:20',
+    createTime: '2024-03-15',
+    avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
+    remark: '违规操作被禁用'
+  }
+])
 
 // 打开新增弹窗
 const openAddDialog = () => {
-  isEdit.value = false;
-  currentAdminId.value = null;
-  formData.name = "";
-  formData.email = "";
-  formData.phone = "";
-  formData.role = "运营管理员";
-  formData.status = "正常";
-  formData.remark = "";
-  dialogVisible.value = true;
-};
+  isEdit.value = false
+  currentAdminId.value = null
+  formData.name = ''
+  formData.email = ''
+  formData.phone = ''
+  formData.role = '运营管理员'
+  formData.status = '正常'
+  formData.remark = ''
+  dialogVisible.value = true
+}
 
 // 打开编辑弹窗
 const openEditDialog = (admin) => {
-  isEdit.value = true;
-  currentAdminId.value = admin.id;
-  formData.name = admin.name;
-  formData.email = admin.email;
-  formData.phone = admin.phone;
-  formData.role = admin.role;
-  formData.status = admin.status;
-  formData.remark = admin.remark || "";
-  dialogVisible.value = true;
-};
+  isEdit.value = true
+  currentAdminId.value = admin.id
+  formData.name = admin.name
+  formData.email = admin.email
+  formData.phone = admin.phone
+  formData.role = admin.role
+  formData.status = admin.status
+  formData.remark = admin.remark || ''
+  dialogVisible.value = true
+}
 
 // 提交表单
 const handleSubmit = (data) => {
   if (isEdit.value) {
     // 编辑管理员
-    const index = adminList.value.findIndex(
-      (a) => a.id === currentAdminId.value,
-    );
+    const index = adminList.value.findIndex((a) => a.id === currentAdminId.value)
     if (index !== -1) {
       adminList.value[index] = {
         ...adminList.value[index],
@@ -331,8 +320,8 @@ const handleSubmit = (data) => {
         phone: data.phone,
         role: data.role,
         status: data.status,
-        remark: data.remark,
-      };
+        remark: data.remark
+      }
     }
   } else {
     // 新增管理员
@@ -343,37 +332,37 @@ const handleSubmit = (data) => {
       phone: data.phone,
       role: data.role,
       status: data.status,
-      lastLogin: "-",
+      lastLogin: '-',
       createTime: new Date().toISOString().slice(0, 10),
-      avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? "men" : "women"}/${Math.floor(Math.random() * 50) + 1}.jpg`,
-      remark: data.remark,
-    };
-    adminList.value.unshift(newAdmin);
-    total.value++;
+      avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 50) + 1}.jpg`,
+      remark: data.remark
+    }
+    adminList.value.unshift(newAdmin)
+    total.value++
   }
-  dialogVisible.value = false;
-};
+  dialogVisible.value = false
+}
 
 // 删除管理员
 const handleDelete = (item) => {
   if (confirm(`确定要删除管理员「${item.name}」吗？`)) {
-    const index = adminList.value.findIndex((a) => a.id === item.id);
+    const index = adminList.value.findIndex((a) => a.id === item.id)
     if (index !== -1) {
-      adminList.value.splice(index, 1);
-      total.value--;
+      adminList.value.splice(index, 1)
+      total.value--
     }
   }
-};
+}
 
 // 关闭弹窗
 const handleCloseDialog = () => {
-  formData.name = "";
-  formData.email = "";
-  formData.phone = "";
-  formData.role = "运营管理员";
-  formData.status = "正常";
-  formData.remark = "";
-};
+  formData.name = ''
+  formData.email = ''
+  formData.phone = ''
+  formData.role = '运营管理员'
+  formData.status = '正常'
+  formData.remark = ''
+}
 </script>
 
 <style scoped>

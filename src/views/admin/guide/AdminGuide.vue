@@ -67,11 +67,7 @@
         <div class="filters">
           <div class="search-box">
             <el-icon><Search /></el-icon>
-            <input
-              v-model="searchKeyword"
-              placeholder="搜索攻略标题"
-              @keyup.enter="handleSearch"
-            />
+            <input v-model="searchKeyword" placeholder="搜索攻略标题" @keyup.enter="handleSearch" />
           </div>
 
           <select v-model="statusFilter" class="select">
@@ -141,7 +137,7 @@
                 :class="{
                   success: item.status === '已发布',
                   warning: item.status === '待审核',
-                  danger: item.status === '已下架',
+                  danger: item.status === '已下架'
                 }"
               >
                 {{ item.status }}
@@ -150,12 +146,8 @@
             <td>{{ item.publishTime }}</td>
             <td>
               <div class="actions">
-                <button class="edit-btn" @click="openEditDialog(item)">
-                  编辑
-                </button>
-                <button class="delete-btn" @click="handleDelete(item)">
-                  删除
-                </button>
+                <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
@@ -188,280 +180,268 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
-import {
-  Notebook,
-  EditPen,
-  View,
-  WarningFilled,
-  Search,
-  Plus,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
+import { ref, reactive, computed } from 'vue'
+import { Notebook, EditPen, View, WarningFilled, Search, Plus } from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
 
 // 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(268);
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(268)
 
 // 筛选条件
-const searchKeyword = ref("");
-const statusFilter = ref("");
-const categoryFilter = ref("");
+const searchKeyword = ref('')
+const statusFilter = ref('')
+const categoryFilter = ref('')
 
 // 弹窗相关
-const dialogVisible = ref(false);
-const isEdit = ref(false);
-const currentGuideId = ref(null);
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentGuideId = ref(null)
 
-const dialogTitle = computed(() => (isEdit.value ? "编辑攻略" : "发布攻略"));
+const dialogTitle = computed(() => (isEdit.value ? '编辑攻略' : '发布攻略'))
 
 // 统计数量
-const todayCount = ref(18);
-const pendingCount = ref(6);
-const totalViews = ref("82K");
+const todayCount = ref(18)
+const pendingCount = ref(6)
+const totalViews = ref('82K')
 
 // 弹窗字段配置（增加状态字段）
 const guideFields = [
   {
-    label: "攻略标题",
-    prop: "title",
-    type: "input",
-    placeholder: "请输入攻略标题",
-    required: true,
+    label: '攻略标题',
+    prop: 'title',
+    type: 'input',
+    placeholder: '请输入攻略标题',
+    required: true
   },
   {
-    label: "攻略描述",
-    prop: "desc",
-    type: "textarea",
+    label: '攻略描述',
+    prop: 'desc',
+    type: 'textarea',
     rows: 2,
-    placeholder: "请输入攻略简短描述",
+    placeholder: '请输入攻略简短描述'
   },
   {
-    label: "作者",
-    prop: "author",
-    type: "input",
-    placeholder: "请输入作者名称",
-    required: true,
+    label: '作者',
+    prop: 'author',
+    type: 'input',
+    placeholder: '请输入作者名称',
+    required: true
   },
   {
-    label: "分类",
-    prop: "category",
-    type: "select",
-    options: ["热门推荐", "自由行", "周边游", "亲子游", "美食攻略"],
+    label: '分类',
+    prop: 'category',
+    type: 'select',
+    options: ['热门推荐', '自由行', '周边游', '亲子游', '美食攻略']
   },
   {
-    label: "状态",
-    prop: "status",
-    type: "select",
-    options: ["待审核", "已发布", "已下架"],
+    label: '状态',
+    prop: 'status',
+    type: 'select',
+    options: ['待审核', '已发布', '已下架']
   },
   {
-    label: "详细内容",
-    prop: "content",
-    type: "textarea",
+    label: '详细内容',
+    prop: 'content',
+    type: 'textarea',
     rows: 5,
-    placeholder: "请输入攻略详细内容",
-    fullWidth: true,
+    placeholder: '请输入攻略详细内容',
+    fullWidth: true
   },
   {
-    label: "封面图片URL",
-    prop: "cover",
-    type: "input",
-    placeholder: "请输入封面图片地址",
-    fullWidth: true,
+    label: '封面图片URL',
+    prop: 'cover',
+    type: 'input',
+    placeholder: '请输入封面图片地址',
+    fullWidth: true
   },
   {
-    label: "作者头像URL",
-    prop: "avatar",
-    type: "input",
-    placeholder: "请输入作者头像地址",
-  },
-];
+    label: '作者头像URL',
+    prop: 'avatar',
+    type: 'input',
+    placeholder: '请输入作者头像地址'
+  }
+]
 
 // 表单数据
 const formData = reactive({
-  title: "",
-  desc: "",
-  author: "",
-  category: "自由行",
-  status: "待审核",
-  content: "",
-  cover: "",
-  avatar: "",
-});
+  title: '',
+  desc: '',
+  author: '',
+  category: '自由行',
+  status: '待审核',
+  content: '',
+  cover: '',
+  avatar: ''
+})
 
 // 攻略列表数据
 const guideList = ref([
   {
     id: 1,
-    title: "九寨沟三日自由行攻略",
-    desc: "详细路线、美食与住宿推荐",
-    author: "旅行日记",
-    category: "自由行",
-    views: "12.5K",
-    likes: "2.3K",
-    status: "已发布",
-    publishTime: "2024-06-07",
-    cover: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
-    content: "九寨沟详细攻略内容...",
+    title: '九寨沟三日自由行攻略',
+    desc: '详细路线、美食与住宿推荐',
+    author: '旅行日记',
+    category: '自由行',
+    views: '12.5K',
+    likes: '2.3K',
+    status: '已发布',
+    publishTime: '2024-06-07',
+    cover: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300',
+    avatar: 'https://randomuser.me/api/portraits/women/12.jpg',
+    content: '九寨沟详细攻略内容...'
   },
   {
     id: 2,
-    title: "杭州西湖周末游玩指南",
-    desc: "一天玩遍西湖热门景点",
-    author: "城市玩家",
-    category: "周边游",
-    views: "8.2K",
-    likes: "1.2K",
-    status: "待审核",
-    publishTime: "2024-06-06",
-    cover: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300",
-    avatar: "https://randomuser.me/api/portraits/men/11.jpg",
-    content: "杭州西湖攻略内容...",
+    title: '杭州西湖周末游玩指南',
+    desc: '一天玩遍西湖热门景点',
+    author: '城市玩家',
+    category: '周边游',
+    views: '8.2K',
+    likes: '1.2K',
+    status: '待审核',
+    publishTime: '2024-06-06',
+    cover: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300',
+    avatar: 'https://randomuser.me/api/portraits/men/11.jpg',
+    content: '杭州西湖攻略内容...'
   },
   {
     id: 3,
-    title: "故宫深度旅游攻略",
-    desc: "故宫热门路线与拍照地点",
-    author: "历史旅行者",
-    category: "热门推荐",
-    views: "18.9K",
-    likes: "3.6K",
-    status: "已下架",
-    publishTime: "2024-06-03",
-    cover: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=300",
-    avatar: "https://randomuser.me/api/portraits/men/15.jpg",
-    content: "故宫攻略内容...",
+    title: '故宫深度旅游攻略',
+    desc: '故宫热门路线与拍照地点',
+    author: '历史旅行者',
+    category: '热门推荐',
+    views: '18.9K',
+    likes: '3.6K',
+    status: '已下架',
+    publishTime: '2024-06-03',
+    cover: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=300',
+    avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
+    content: '故宫攻略内容...'
   },
   {
     id: 4,
-    title: "成都美食探店攻略",
-    desc: "本地人推荐的美食地图",
-    author: "吃货小分队",
-    category: "美食攻略",
-    views: "25.3K",
-    likes: "5.1K",
-    status: "已发布",
-    publishTime: "2024-06-05",
-    cover: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300",
-    avatar: "https://randomuser.me/api/portraits/women/25.jpg",
-    content: "成都美食攻略内容...",
+    title: '成都美食探店攻略',
+    desc: '本地人推荐的美食地图',
+    author: '吃货小分队',
+    category: '美食攻略',
+    views: '25.3K',
+    likes: '5.1K',
+    status: '已发布',
+    publishTime: '2024-06-05',
+    cover: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300',
+    avatar: 'https://randomuser.me/api/portraits/women/25.jpg',
+    content: '成都美食攻略内容...'
   },
   {
     id: 5,
-    title: "三亚亲子游攻略",
-    desc: "带娃旅行必备指南",
-    author: "亲子旅行家",
-    category: "亲子游",
-    views: "6.8K",
-    likes: "890",
-    status: "待审核",
-    publishTime: "2024-06-04",
-    cover: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300",
-    avatar: "https://randomuser.me/api/portraits/women/18.jpg",
-    content: "三亚亲子游攻略内容...",
-  },
-]);
+    title: '三亚亲子游攻略',
+    desc: '带娃旅行必备指南',
+    author: '亲子旅行家',
+    category: '亲子游',
+    views: '6.8K',
+    likes: '890',
+    status: '待审核',
+    publishTime: '2024-06-04',
+    cover: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300',
+    avatar: 'https://randomuser.me/api/portraits/women/18.jpg',
+    content: '三亚亲子游攻略内容...'
+  }
+])
 
 // 筛选后的数据
 const filteredList = computed(() => {
-  let list = [...guideList.value];
+  let list = [...guideList.value]
 
   if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase();
+    const keyword = searchKeyword.value.toLowerCase()
     list = list.filter(
       (item) =>
-        item.title.toLowerCase().includes(keyword) ||
-        item.desc.toLowerCase().includes(keyword),
-    );
+        item.title.toLowerCase().includes(keyword) || item.desc.toLowerCase().includes(keyword)
+    )
   }
 
   if (statusFilter.value) {
-    list = list.filter((item) => item.status === statusFilter.value);
+    list = list.filter((item) => item.status === statusFilter.value)
   }
 
   if (categoryFilter.value) {
-    list = list.filter((item) => item.category === categoryFilter.value);
+    list = list.filter((item) => item.category === categoryFilter.value)
   }
 
-  return list;
-});
+  return list
+})
 
-const filteredTotal = computed(() => filteredList.value.length);
+const filteredTotal = computed(() => filteredList.value.length)
 
 const displayList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredList.value.slice(start, end);
-});
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredList.value.slice(start, end)
+})
 
 // 更新统计数量
 const updateStats = () => {
-  total.value = guideList.value.length;
-  pendingCount.value = guideList.value.filter(
-    (item) => item.status === "待审核",
-  ).length;
-};
+  total.value = guideList.value.length
+  pendingCount.value = guideList.value.filter((item) => item.status === '待审核').length
+}
 
 // 搜索
 const handleSearch = () => {
-  currentPage.value = 1;
-};
+  currentPage.value = 1
+}
 
 // 重置筛选
 const handleReset = () => {
-  searchKeyword.value = "";
-  statusFilter.value = "";
-  categoryFilter.value = "";
-  currentPage.value = 1;
-};
+  searchKeyword.value = ''
+  statusFilter.value = ''
+  categoryFilter.value = ''
+  currentPage.value = 1
+}
 
 // 分页切换
 const handlePageChange = (page) => {
-  currentPage.value = page;
-};
+  currentPage.value = page
+}
 
 // 新增攻略
 const openAddDialog = () => {
-  isEdit.value = false;
-  currentGuideId.value = null;
-  formData.title = "";
-  formData.desc = "";
-  formData.author = "";
-  formData.category = "自由行";
-  formData.status = "待审核";
-  formData.content = "";
-  formData.cover = "";
-  formData.avatar = "";
-  dialogVisible.value = true;
-};
+  isEdit.value = false
+  currentGuideId.value = null
+  formData.title = ''
+  formData.desc = ''
+  formData.author = ''
+  formData.category = '自由行'
+  formData.status = '待审核'
+  formData.content = ''
+  formData.cover = ''
+  formData.avatar = ''
+  dialogVisible.value = true
+}
 
 // 编辑攻略
 const openEditDialog = (item) => {
-  isEdit.value = true;
-  currentGuideId.value = item.id;
-  formData.title = item.title;
-  formData.desc = item.desc;
-  formData.author = item.author;
-  formData.category = item.category;
-  formData.status = item.status;
-  formData.content = item.content || "";
-  formData.cover = item.cover;
-  formData.avatar = item.avatar;
-  dialogVisible.value = true;
-};
+  isEdit.value = true
+  currentGuideId.value = item.id
+  formData.title = item.title
+  formData.desc = item.desc
+  formData.author = item.author
+  formData.category = item.category
+  formData.status = item.status
+  formData.content = item.content || ''
+  formData.cover = item.cover
+  formData.avatar = item.avatar
+  dialogVisible.value = true
+}
 
 // 提交表单
 const handleSubmit = (data) => {
-  const now = new Date().toISOString().slice(0, 10);
+  const now = new Date().toISOString().slice(0, 10)
 
   if (isEdit.value) {
-    const index = guideList.value.findIndex(
-      (g) => g.id === currentGuideId.value,
-    );
+    const index = guideList.value.findIndex((g) => g.id === currentGuideId.value)
     if (index !== -1) {
       guideList.value[index] = {
         ...guideList.value[index],
@@ -472,57 +452,55 @@ const handleSubmit = (data) => {
         status: data.status,
         content: data.content,
         cover: data.cover || guideList.value[index].cover,
-        avatar: data.avatar || guideList.value[index].avatar,
-      };
+        avatar: data.avatar || guideList.value[index].avatar
+      }
     }
   } else {
     const newGuide = {
       id: Date.now(),
       title: data.title,
-      desc: data.desc || "暂无描述",
+      desc: data.desc || '暂无描述',
       author: data.author,
       category: data.category,
-      views: "0",
-      likes: "0",
-      status: data.status || "待审核",
+      views: '0',
+      likes: '0',
+      status: data.status || '待审核',
       publishTime: now,
-      cover:
-        data.cover ||
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
-      avatar: data.avatar || "https://randomuser.me/api/portraits/lego/1.jpg",
-      content: data.content || "",
-    };
-    guideList.value.unshift(newGuide);
+      cover: data.cover || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300',
+      avatar: data.avatar || 'https://randomuser.me/api/portraits/lego/1.jpg',
+      content: data.content || ''
+    }
+    guideList.value.unshift(newGuide)
   }
-  updateStats();
-  dialogVisible.value = false;
-};
+  updateStats()
+  dialogVisible.value = false
+}
 
 // 关闭弹窗
 const handleCloseDialog = () => {
-  formData.title = "";
-  formData.desc = "";
-  formData.author = "";
-  formData.category = "自由行";
-  formData.status = "待审核";
-  formData.content = "";
-  formData.cover = "";
-  formData.avatar = "";
-};
+  formData.title = ''
+  formData.desc = ''
+  formData.author = ''
+  formData.category = '自由行'
+  formData.status = '待审核'
+  formData.content = ''
+  formData.cover = ''
+  formData.avatar = ''
+}
 
 // 删除攻略
 const handleDelete = (item) => {
   if (confirm(`确定要删除攻略「${item.title}」吗？删除后不可恢复！`)) {
-    const index = guideList.value.findIndex((g) => g.id === item.id);
+    const index = guideList.value.findIndex((g) => g.id === item.id)
     if (index !== -1) {
-      guideList.value.splice(index, 1);
-      updateStats();
+      guideList.value.splice(index, 1)
+      updateStats()
       if (displayList.value.length === 0 && currentPage.value > 1) {
-        currentPage.value--;
+        currentPage.value--
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>

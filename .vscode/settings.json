@@ -2,11 +2,12 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "always"
+    "source.fixAll.eslint": "explicit"
   },
-  "eslint.validate": ["javascript", "vue", "html"],
-  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
-  "js/ts.validate.enabled": false,
-  "eslint.format.enable": true,
-  "problems.decorations.enabled": true
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

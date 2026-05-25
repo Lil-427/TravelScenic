@@ -1,4 +1,398 @@
 <!-- ScenicSpot.vue - 景区管理 -->
+<script setup>
+import { getSpotList, getSpotDetail, updateSpot, addSpot, deleteSpot } from '@/api/admin/spot'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import {
+  Plus,
+  Location,
+  Star,
+  WarningFilled,
+  CircleClose,
+  Search,
+  StarFilled
+} from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import FormDialog from '../../../components/FormDialog.vue'
+
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(4)
+const total = ref(0)
+
+// 筛选条件
+const searchKeyword = ref('')
+const categoryFilter = ref('')
+const statusFilter = ref('')
+
+// 弹窗相关
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentScenicId = ref(null)
+
+const dialogTitle = computed(() => (isEdit.value ? '编辑景区' : '新增景区'))
+
+// 统计数量
+const hotCount = ref(36)
+const pendingCount = ref(0)
+const offlineCount = ref(0)
+const grandTotal = ref(0)
+
+// 弹窗字段配置（添加验证规则）
+const scenicFields = [
+  {
+    label: '景区名称',
+    prop: 'name',
+    type: 'input',
+    placeholder: '请输入景区名称',
+    required: true,
+    rules: [
+      { required: true, message: '请输入景区名称', trigger: 'blur' },
+      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+    ]
+  },
+  {
+    label: '景区描述',
+    prop: 'desc',
+    type: 'textarea',
+    rows: 2,
+    placeholder: '请输入景区描述',
+    required: true,
+    rules: [
+      { required: true, message: '请输入景区描述', trigger: 'blur' },
+      { min: 5, max: 200, message: '长度在 5 到 200 个字符', trigger: 'blur' }
+    ]
+  },
+  {
+    label: '分类',
+    prop: 'category',
+    type: 'select',
+    options: ['自然风光', '历史古迹', '主题乐园', '城市地标', '海滨度假'],
+    required: true,
+    rules: [{ required: true, message: '请选择分类', trigger: 'change' }]
+  },
+  {
+    label: '所在地',
+    prop: 'location',
+    type: 'input',
+    placeholder: '请输入所在地（如：四川 阿坝）',
+    required: true,
+    rules: [
+      { required: true, message: '请输入所在地', trigger: 'blur' },
+      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+    ]
+  },
+  {
+    label: '门票价格',
+    prop: 'price',
+    type: 'number',
+    placeholder: '请输入门票价格（0表示免费）',
+    required: true,
+    rules: [
+      {
+        required: true,
+        validator: (rule, value, callback) => {
+          // 允许 0 或正数，不允许 null/undefined/空字符串
+          if (value === undefined || value === null || value === '') {
+            callback(new Error('请输入门票价格'))
+          } else if (typeof value === 'number' && value >= 0) {
+            callback() // 验证通过，包括0
+          } else {
+            callback(new Error('请输入有效的价格'))
+          }
+        },
+        trigger: 'blur'
+      },
+      { type: 'number', min: 0, max: 2000, message: '价格在 0-2000 元之间' }
+    ]
+  },
+  {
+    label: '状态',
+    prop: 'status',
+    type: 'select',
+    options: ['待审核', '已上架', '已下架'],
+    required: true,
+    rules: [{ required: true, message: '请选择状态', trigger: 'change' }]
+  },
+  {
+    label: '详细内容',
+    prop: 'content',
+    type: 'textarea',
+    rows: 4,
+    placeholder: '请输入景区详细介绍',
+    fullWidth: true,
+    required: true,
+    rules: [
+      { required: true, message: '请输入详细内容', trigger: 'blur' },
+      { min: 10, max: 1000, message: '长度在 10 到 1000 个字符', trigger: 'blur' }
+    ]
+  },
+  {
+    label: '封面图片URL',
+    prop: 'cover',
+    type: 'input',
+    placeholder: '请输入封面图片地址',
+    fullWidth: true
+  }
+]
+
+// 表单数据
+const formData = reactive({
+  name: '',
+  desc: '',
+  category: '自然风光',
+  location: '',
+  price: 0,
+  status: '待审核',
+  content: '',
+  cover: ''
+})
+
+// 景区列表数据
+const scenicList = ref([])
+
+// 获取所有景区总数（不分页、不筛选）
+const fetchGrandTotal = async () => {
+  try {
+    const res = await getSpotList({ page: 1, size: 1 })
+    grandTotal.value = res.data.total
+  } catch (error) {
+    console.log('获取总数失败', error)
+  }
+}
+
+// 获取统计数据（待审核、已下架数量）
+const fetchStats = async () => {
+  try {
+    const [pendingRes, offlineRes] = await Promise.all([
+      getSpotList({ page: 1, size: 1, status: 0 }),
+      getSpotList({ page: 1, size: 1, status: 2 })
+    ])
+    pendingCount.value = pendingRes.data.total
+    offlineCount.value = offlineRes.data.total
+  } catch (error) {
+    console.log('获取统计失败', error)
+  }
+}
+
+// 获取景区列表（支持筛选和分页）
+const fetchSpotList = async () => {
+  try {
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value
+    }
+
+    // 搜索关键词
+    if (searchKeyword.value) {
+      params.keyword = searchKeyword.value
+    }
+
+    // 分类筛选
+    if (categoryFilter.value) {
+      params.category = categoryFilter.value
+    }
+
+    // 状态筛选
+    if (statusFilter.value !== '') {
+      params.status = Number(statusFilter.value)
+    }
+
+    console.log('请求参数:', params)
+
+    const res = await getSpotList(params)
+
+    console.log('景区列表:', res.data)
+
+    scenicList.value = res.data.list.map((item) => ({
+      id: item.id,
+      name: item.scenic_name,
+      category: item.category_name,
+      cover: item.cover_image,
+      location: item.location,
+      price: item.price,
+      status: item.status === 0 ? '待审核' : item.status === 1 ? '已上架' : '已下架',
+      createTime: item.create_time,
+      desc: item.description || '',
+      score: item.score || '0'
+    }))
+
+    total.value = res.data.total
+  } catch (error) {
+    console.log('获取景区失败', error)
+  }
+}
+
+onMounted(() => {
+  fetchGrandTotal() // 总数不随搜索变化
+  fetchSpotList() // 列表随搜索变化
+  fetchStats() // 待审核和已下架数量
+})
+
+// 搜索
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchSpotList()
+}
+
+// 重置筛选
+const handleReset = () => {
+  searchKeyword.value = ''
+  categoryFilter.value = ''
+  statusFilter.value = ''
+  currentPage.value = 1
+  fetchSpotList()
+}
+
+// 分页切换
+const handlePageChange = (page) => {
+  currentPage.value = page
+  fetchSpotList()
+}
+
+// 新增景区
+const openAddDialog = () => {
+  isEdit.value = false
+  currentScenicId.value = null
+  formData.name = ''
+  formData.desc = ''
+  formData.category = '自然风光'
+  formData.location = ''
+  formData.price = 0
+  formData.status = '待审核'
+  formData.content = ''
+  formData.cover = ''
+  dialogVisible.value = true
+}
+
+// 编辑景区
+const openEditDialog = async (item) => {
+  try {
+    isEdit.value = true
+    currentScenicId.value = item.id
+
+    const res = await getSpotDetail(item.id)
+    console.log(JSON.stringify(res, null, 2))
+
+    const detail = res.data
+
+    formData.name = detail.scenic_name || ''
+    formData.desc = detail.description || ''
+    formData.category = detail.category_name || ''
+    formData.location = detail.location || ''
+    formData.price = detail.price || 0
+    formData.status = detail.status === 0 ? '待审核' : detail.status === 1 ? '已上架' : '已下架'
+    formData.content = detail.description || ''
+    formData.cover = detail.cover_image || ''
+
+    dialogVisible.value = true
+  } catch (error) {
+    console.log('获取景区详情失败', error)
+  }
+}
+
+// 提交表单
+const handleSubmit = async (data) => {
+  try {
+    if (isEdit.value) {
+      await updateSpot(currentScenicId.value, {
+        scenic_name: data.name,
+        description: data.desc,
+        category_name: data.category,
+        location: data.location,
+        price: data.price,
+        status: data.status === '待审核' ? 0 : data.status === '已上架' ? 1 : 2,
+        cover_image: data.cover
+      })
+
+      ElMessage.success('更新成功')
+
+      const index = scenicList.value.findIndex((item) => item.id === currentScenicId.value)
+      if (index !== -1) {
+        scenicList.value.splice(index, 1, {
+          ...scenicList.value[index],
+          name: data.name,
+          desc: data.desc,
+          category: data.category,
+          location: data.location,
+          price: data.price,
+          status: data.status,
+          cover: data.cover
+        })
+      }
+
+      // 刷新统计数据
+      fetchStats()
+    } else {
+      await addSpot({
+        scenic_name: data.name,
+        description: data.desc,
+        category_name: data.category,
+        location: data.location,
+        price: data.price,
+        status: data.status === '待审核' ? 0 : data.status === '已上架' ? 1 : 2,
+        cover_image: data.cover
+      })
+
+      ElMessage.success('新增成功')
+
+      // 更新总数和统计数据
+      fetchGrandTotal()
+      fetchStats()
+
+      // 刷新列表
+      fetchSpotList()
+    }
+
+    dialogVisible.value = false
+  } catch (error) {
+    console.log(error)
+    ElMessage.error('操作失败')
+  }
+}
+
+// 关闭弹窗
+const handleCloseDialog = () => {
+  formData.name = ''
+  formData.desc = ''
+  formData.category = '自然风光'
+  formData.location = ''
+  formData.price = 0
+  formData.status = '待审核'
+  formData.content = ''
+  formData.cover = ''
+}
+
+// 删除景区
+const handleDelete = async (item) => {
+  try {
+    const confirmDelete = confirm(`确定要删除景区「${item.name}」吗？`)
+    if (!confirmDelete) return
+
+    await deleteSpot(item.id)
+    ElMessage.success('删除成功')
+
+    const index = scenicList.value.findIndex((s) => s.id === item.id)
+    if (index !== -1) {
+      scenicList.value.splice(index, 1)
+    }
+
+    // 更新总数和统计数据
+    fetchGrandTotal()
+    fetchStats()
+
+    // 如果当前页没有数据了，回到上一页
+    if (scenicList.value.length === 0 && currentPage.value > 1) {
+      currentPage.value--
+      fetchSpotList()
+    }
+  } catch (error) {
+    console.log(error)
+    ElMessage.error('删除失败')
+  }
+}
+</script>
+
 <template>
   <div class="page-container">
     <!-- 页面头部 -->
@@ -7,10 +401,6 @@
         <h2>景区管理</h2>
         <p>管理平台景区资源与展示信息</p>
       </div>
-      <button class="add-btn" @click="openAddDialog">
-        <el-icon><Plus /></el-icon>
-        新增景区
-      </button>
     </div>
 
     <!-- 数据统计卡片 -->
@@ -18,7 +408,7 @@
       <div class="stats-card">
         <div>
           <p>景区总数</p>
-          <h2>{{ total }}</h2>
+          <h2>{{ grandTotal }}</h2>
           <span>+12%</span>
         </div>
         <div class="icon green">
@@ -67,14 +457,10 @@
         <div class="filters">
           <div class="search-box">
             <el-icon><Search /></el-icon>
-            <input
-              v-model="searchKeyword"
-              placeholder="搜索景区名称"
-              @keyup.enter="handleSearch"
-            />
+            <input v-model="searchKeyword" placeholder="搜索景区名称" @keyup.enter="handleSearch" />
           </div>
 
-          <select v-model="categoryFilter" class="select">
+          <select v-model="categoryFilter" class="select" @change="handleSearch">
             <option value="">全部分类</option>
             <option value="自然风光">自然风光</option>
             <option value="历史古迹">历史古迹</option>
@@ -83,22 +469,28 @@
             <option value="海滨度假">海滨度假</option>
           </select>
 
-          <select v-model="statusFilter" class="select">
+          <select v-model="statusFilter" class="select" @change="handleSearch">
             <option value="">全部状态</option>
-            <option value="已上架">已上架</option>
-            <option value="待审核">待审核</option>
-            <option value="已下架">已下架</option>
+            <option value="1">已上架</option>
+            <option value="0">待审核</option>
+            <option value="2">已下架</option>
           </select>
 
-          <button class="search-btn" @click="handleSearch">搜索</button>
           <button class="reset-btn" @click="handleReset">重置</button>
         </div>
+
+        <!-- 新增景区按钮 -->
+        <button class="add-btn" @click="openAddDialog">
+          <el-icon><Plus /></el-icon>
+          新增景区
+        </button>
       </div>
 
       <!-- 表格 -->
       <table class="scenic-table">
         <thead>
           <tr>
+            <th>序号</th>
             <th>景区信息</th>
             <th>分类</th>
             <th>所在地</th>
@@ -110,10 +502,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in displayList" :key="item.id">
+          <tr v-for="(item, index) in scenicList" :key="item.id">
+            <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
             <td>
               <div class="scenic-info">
-                <img :src="item.cover" />
+                <img v-if="item.cover" :src="item.cover" alt="" />
+                <div v-else class="spot-cover">景区</div>
                 <div>
                   <h4>{{ item.name }}</h4>
                   <p>{{ item.desc }}</p>
@@ -140,7 +534,7 @@
                 :class="{
                   success: item.status === '已上架',
                   warning: item.status === '待审核',
-                  danger: item.status === '已下架',
+                  danger: item.status === '已下架'
                 }"
               >
                 {{ item.status }}
@@ -149,24 +543,20 @@
             <td>{{ item.createTime }}</td>
             <td>
               <div class="actions">
-                <button class="edit-btn" @click="openEditDialog(item)">
-                  编辑
-                </button>
-                <button class="delete-btn" @click="handleDelete(item)">
-                  删除
-                </button>
+                <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
-          <tr v-if="displayList.length === 0">
-            <td colspan="8" class="empty-cell">暂无数据</td>
+          <tr v-if="scenicList.length === 0">
+            <td colspan="9" class="empty-cell">暂无数据</td>
           </tr>
         </tbody>
       </table>
 
       <!-- 分页组件 -->
       <Pagination
-        :total="filteredTotal"
+        :total="total"
         :current="currentPage"
         :page-size="pageSize"
         @update:current="handlePageChange"
@@ -186,357 +576,13 @@
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, computed } from "vue";
-import {
-  Plus,
-  Location,
-  Star,
-  WarningFilled,
-  CircleClose,
-  Search,
-  StarFilled,
-} from "@element-plus/icons-vue";
-import Pagination from "../../../components/Pagination.vue";
-import FormDialog from "../../../components/FormDialog.vue";
-
-// 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(128);
-
-// 筛选条件
-const searchKeyword = ref("");
-const categoryFilter = ref("");
-const statusFilter = ref("");
-
-// 弹窗相关
-const dialogVisible = ref(false);
-const isEdit = ref(false);
-const currentScenicId = ref(null);
-
-const dialogTitle = computed(() => (isEdit.value ? "编辑景区" : "新增景区"));
-
-// 统计数量
-const hotCount = ref(36);
-const pendingCount = ref(8);
-const offlineCount = ref(12);
-
-// 弹窗字段配置（包含状态）
-const scenicFields = [
-  {
-    label: "景区名称",
-    prop: "name",
-    type: "input",
-    placeholder: "请输入景区名称",
-    required: true,
-  },
-  {
-    label: "景区描述",
-    prop: "desc",
-    type: "textarea",
-    rows: 2,
-    placeholder: "请输入景区描述",
-  },
-  {
-    label: "分类",
-    prop: "category",
-    type: "select",
-    options: ["自然风光", "历史古迹", "主题乐园", "城市地标", "海滨度假"],
-  },
-  {
-    label: "所在地",
-    prop: "location",
-    type: "input",
-    placeholder: "请输入所在地（如：四川 阿坝）",
-    required: true,
-  },
-  {
-    label: "门票价格",
-    prop: "price",
-    type: "number",
-    placeholder: "请输入门票价格（0表示免费）",
-  },
-  {
-    label: "状态",
-    prop: "status",
-    type: "select",
-    options: ["待审核", "已上架", "已下架"],
-  },
-  {
-    label: "详细内容",
-    prop: "content",
-    type: "textarea",
-    rows: 4,
-    placeholder: "请输入景区详细介绍",
-    fullWidth: true,
-  },
-  {
-    label: "封面图片URL",
-    prop: "cover",
-    type: "input",
-    placeholder: "请输入封面图片地址",
-    fullWidth: true,
-  },
-];
-
-// 表单数据
-const formData = reactive({
-  name: "",
-  desc: "",
-  category: "自然风光",
-  location: "",
-  price: 0,
-  status: "待审核",
-  content: "",
-  cover: "",
-});
-
-// 景区列表数据
-const scenicList = ref([
-  {
-    id: 1,
-    name: "九寨沟风景区",
-    desc: "国家5A级自然风景区，以多彩湖泊和瀑布闻名",
-    category: "自然风光",
-    location: "四川 阿坝",
-    price: 268,
-    score: "4.9",
-    status: "已上架",
-    createTime: "2024-06-01",
-    cover: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
-    content: "九寨沟位于四川省阿坝藏族羌族自治州，是世界自然遗产...",
-  },
-  {
-    id: 2,
-    name: "杭州西湖",
-    desc: "中国著名湖泊景区，免费开放",
-    category: "自然风光",
-    location: "浙江 杭州",
-    price: 0,
-    score: "4.8",
-    status: "待审核",
-    createTime: "2024-06-03",
-    cover: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300",
-    content: "西湖位于浙江省杭州市，是中国主要的观赏性淡水湖泊之一...",
-  },
-  {
-    id: 3,
-    name: "故宫博物院",
-    desc: "世界文化遗产，明清两代皇家宫殿",
-    category: "历史古迹",
-    location: "北京",
-    price: 60,
-    score: "4.9",
-    status: "已下架",
-    createTime: "2024-05-20",
-    cover: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=300",
-    content:
-      "故宫博物院成立于1925年，是世界上规模最大、保存最完整的木结构宫殿建筑群...",
-  },
-  {
-    id: 4,
-    name: "上海迪士尼乐园",
-    desc: "中国大陆首座迪士尼主题乐园",
-    category: "主题乐园",
-    location: "上海",
-    price: 599,
-    score: "4.7",
-    status: "已上架",
-    createTime: "2024-06-02",
-    cover: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
-    content: "上海迪士尼乐园是中国内地首座迪士尼主题乐园，拥有多个主题园区...",
-  },
-  {
-    id: 5,
-    name: "黄山风景区",
-    desc: "世界自然与文化双遗产，以奇松怪石云海闻名",
-    category: "自然风光",
-    location: "安徽 黄山",
-    price: 190,
-    score: "4.9",
-    status: "待审核",
-    createTime: "2024-06-04",
-    cover: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300",
-    content: "黄山位于安徽省南部，以奇松、怪石、云海、温泉四绝著称...",
-  },
-]);
-
-// 筛选后的数据
-const filteredList = computed(() => {
-  let list = [...scenicList.value];
-
-  // 关键词筛选（名称/描述）
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase();
-    list = list.filter(
-      (item) =>
-        item.name.toLowerCase().includes(keyword) ||
-        item.desc.toLowerCase().includes(keyword),
-    );
-  }
-
-  // 分类筛选
-  if (categoryFilter.value) {
-    list = list.filter((item) => item.category === categoryFilter.value);
-  }
-
-  // 状态筛选
-  if (statusFilter.value) {
-    list = list.filter((item) => item.status === statusFilter.value);
-  }
-
-  return list;
-});
-
-const filteredTotal = computed(() => filteredList.value.length);
-
-// 当前页显示的数据
-const displayList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredList.value.slice(start, end);
-});
-
-// 更新统计数量
-const updateStats = () => {
-  total.value = scenicList.value.length;
-  hotCount.value = scenicList.value.filter(
-    (item) => parseFloat(item.score) >= 4.7 && item.status === "已上架",
-  ).length;
-  pendingCount.value = scenicList.value.filter(
-    (item) => item.status === "待审核",
-  ).length;
-  offlineCount.value = scenicList.value.filter(
-    (item) => item.status === "已下架",
-  ).length;
-};
-
-// 搜索
-const handleSearch = () => {
-  currentPage.value = 1;
-};
-
-// 重置筛选
-const handleReset = () => {
-  searchKeyword.value = "";
-  categoryFilter.value = "";
-  statusFilter.value = "";
-  currentPage.value = 1;
-};
-
-// 分页切换
-const handlePageChange = (page) => {
-  currentPage.value = page;
-};
-
-// 新增景区
-const openAddDialog = () => {
-  isEdit.value = false;
-  currentScenicId.value = null;
-  formData.name = "";
-  formData.desc = "";
-  formData.category = "自然风光";
-  formData.location = "";
-  formData.price = 0;
-  formData.status = "待审核";
-  formData.content = "";
-  formData.cover = "";
-  dialogVisible.value = true;
-};
-
-// 编辑景区
-const openEditDialog = (item) => {
-  isEdit.value = true;
-  currentScenicId.value = item.id;
-  formData.name = item.name;
-  formData.desc = item.desc;
-  formData.category = item.category;
-  formData.location = item.location;
-  formData.price = item.price;
-  formData.status = item.status;
-  formData.content = item.content || "";
-  formData.cover = item.cover;
-  dialogVisible.value = true;
-};
-
-// 提交表单
-const handleSubmit = (data) => {
-  const now = new Date().toISOString().slice(0, 10);
-
-  if (isEdit.value) {
-    const index = scenicList.value.findIndex(
-      (s) => s.id === currentScenicId.value,
-    );
-    if (index !== -1) {
-      scenicList.value[index] = {
-        ...scenicList.value[index],
-        name: data.name,
-        desc: data.desc,
-        category: data.category,
-        location: data.location,
-        price: data.price,
-        status: data.status,
-        content: data.content,
-        cover: data.cover || scenicList.value[index].cover,
-      };
-    }
-  } else {
-    const newScenic = {
-      id: Date.now(),
-      name: data.name,
-      desc: data.desc || "暂无描述",
-      category: data.category,
-      location: data.location,
-      price: data.price,
-      score: "0",
-      status: data.status || "待审核",
-      createTime: now,
-      cover:
-        data.cover ||
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
-      content: data.content || "",
-    };
-    scenicList.value.unshift(newScenic);
-  }
-  updateStats();
-  dialogVisible.value = false;
-};
-
-// 关闭弹窗
-const handleCloseDialog = () => {
-  formData.name = "";
-  formData.desc = "";
-  formData.category = "自然风光";
-  formData.location = "";
-  formData.price = 0;
-  formData.status = "待审核";
-  formData.content = "";
-  formData.cover = "";
-};
-
-// 删除景区
-const handleDelete = (item) => {
-  if (confirm(`确定要删除景区「${item.name}」吗？删除后不可恢复！`)) {
-    const index = scenicList.value.findIndex((s) => s.id === item.id);
-    if (index !== -1) {
-      scenicList.value.splice(index, 1);
-      updateStats();
-      if (displayList.value.length === 0 && currentPage.value > 1) {
-        currentPage.value--;
-      }
-    }
-  }
-};
-</script>
-
 <style scoped>
 .page-container {
   width: 100%;
 }
 
 /* 页面头部 */
-.page-header {
+page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -654,7 +700,11 @@ const handleDelete = (item) => {
 }
 
 .table-toolbar {
-  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .filters {
@@ -696,35 +746,38 @@ const handleDelete = (item) => {
   cursor: pointer;
 }
 
-.search-btn,
 .reset-btn {
   height: 42px;
   padding: 0 20px;
   border-radius: 14px;
-  border: none;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
   font-weight: 500;
-}
-
-.search-btn {
-  background: #18b57d;
-  color: #fff;
-}
-
-.search-btn:hover {
-  background: #0e9f6e;
-}
-
-.reset-btn {
-  background: #f1f5f9;
+  background: #ffffff;
   color: #64748b;
+  transition: all 0.2s;
 }
 
 .reset-btn:hover {
-  background: #e2e8f0;
+  background: #ffffff;
+  border-color: #18b57d;
+  color: #18b57d;
 }
 
 /* 表格 */
+.spot-cover {
+  width: 90px;
+  height: 60px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #18b57d, #4a8cff);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
 .scenic-table {
   width: 100%;
   border-collapse: collapse;

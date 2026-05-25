@@ -25,3 +25,20 @@ export const addCategory = (data) => {
     data
   })
 }
+
+//更新分类
+export const updateCategory = (id, data) => {
+  return request({
+    url: `/admin/category/update/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+//删除分类
+export const deleteCategory = (id) => {
+  return request({
+    url: `/admin/category/delete/${id}`,
+    method: 'delete'
+  })
+}

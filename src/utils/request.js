@@ -4,14 +4,11 @@ import axios from 'axios'
 // 创建 axios 实例
 const request = axios.create({
   // ============================================
-  // 当前使用 Mock 地址（后端开发好后改成真实地址）
+  // Mock 地址（开发用）
+  // 真实后端: http://192.168.43.45:8080
   // ============================================
 
-  // Mock 地址（你现在用的）
-  baseURL: 'https://m1.apifoxmock.com/m1/8319784-8083579-default',
-
-  // 真实后端地址（后端开发好后，把上面这行注释，取消下面这行的注释）
-  // baseURL: 'http://localhost:8080/api/v1',
+  baseURL: '',
 
   timeout: 15000, // 请求超时时间：15秒
 

@@ -1,5 +1,5 @@
-<!-- ScenicSpot.vue - 景区管理 -->
 <script setup>
+import { getCategoryList } from '@/api/admin/category'
 import { getSpotList, getSpotDetail, updateSpot, addSpot, deleteSpot } from '@/api/admin/spot'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -38,8 +38,11 @@ const pendingCount = ref(0)
 const offlineCount = ref(0)
 const grandTotal = ref(0)
 
-// 弹窗字段配置（添加验证规则）
-const scenicFields = [
+// 分类选项（从后端获取）
+const categoryOptions = ref([])
+
+// 弹窗字段配置
+const scenicFields = computed(() => [
   {
     label: '景区名称',
     prop: 'name',
@@ -48,7 +51,7 @@ const scenicFields = [
     required: true,
     rules: [
       { required: true, message: '请输入景区名称', trigger: 'blur' },
-      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+      { min: 2, max: 100, message: '长度在 2 到 100 个字符', trigger: 'blur' }
     ]
   },
   {
@@ -65,9 +68,9 @@ const scenicFields = [
   },
   {
     label: '分类',
-    prop: 'category',
+    prop: 'category_id',
     type: 'select',
-    options: ['自然风光', '历史古迹', '主题乐园', '城市地标', '海滨度假'],
+    options: categoryOptions.value,
     required: true,
     rules: [{ required: true, message: '请选择分类', trigger: 'change' }]
   },
@@ -79,7 +82,7 @@ const scenicFields = [
     required: true,
     rules: [
       { required: true, message: '请输入所在地', trigger: 'blur' },
-      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+      { min: 2, max: 200, message: '长度在 2 到 200 个字符', trigger: 'blur' }
     ]
   },
   {
@@ -92,11 +95,10 @@ const scenicFields = [
       {
         required: true,
         validator: (rule, value, callback) => {
-          // 允许 0 或正数，不允许 null/undefined/空字符串
           if (value === undefined || value === null || value === '') {
             callback(new Error('请输入门票价格'))
           } else if (typeof value === 'number' && value >= 0) {
-            callback() // 验证通过，包括0
+            callback()
           } else {
             callback(new Error('请输入有效的价格'))
           }
@@ -105,6 +107,48 @@ const scenicFields = [
       },
       { type: 'number', min: 0, max: 2000, message: '价格在 0-2000 元之间' }
     ]
+  },
+  {
+    label: '经度',
+    prop: 'longitude',
+    type: 'number',
+    placeholder: '请输入经度（-180~180）',
+    required: true,
+    rules: [{ required: true, message: '请输入经度', trigger: 'blur' }]
+  },
+  {
+    label: '纬度',
+    prop: 'latitude',
+    type: 'number',
+    placeholder: '请输入纬度（-90~90）',
+    required: true,
+    rules: [{ required: true, message: '请输入纬度', trigger: 'blur' }]
+  },
+  {
+    label: '开放时间',
+    prop: 'open_time',
+    type: 'input',
+    placeholder: '请输入开放时间（如：08:00-18:00）',
+    required: true,
+    rules: [{ required: true, message: '请输入开放时间', trigger: 'blur' }]
+  },
+  {
+    label: '总库存',
+    prop: 'stock',
+    type: 'number',
+    placeholder: '请输入总库存',
+    required: true,
+    rules: [{ required: true, message: '请输入总库存', trigger: 'blur' }]
+  },
+  {
+    label: '是否需要实名',
+    prop: 'is_real_name',
+    type: 'switch',
+    activeValue: 1,
+    activeLabel: '需要',
+    inactiveValue: 0,
+    inactiveLabel: '不需要',
+    required: true
   },
   {
     label: '状态',
@@ -120,12 +164,7 @@ const scenicFields = [
     type: 'textarea',
     rows: 4,
     placeholder: '请输入景区详细介绍',
-    fullWidth: true,
-    required: true,
-    rules: [
-      { required: true, message: '请输入详细内容', trigger: 'blur' },
-      { min: 10, max: 1000, message: '长度在 10 到 1000 个字符', trigger: 'blur' }
-    ]
+    fullWidth: true
   },
   {
     label: '封面图片URL',
@@ -134,15 +173,20 @@ const scenicFields = [
     placeholder: '请输入封面图片地址',
     fullWidth: true
   }
-]
+])
 
 // 表单数据
 const formData = reactive({
   name: '',
   desc: '',
-  category: '自然风光',
+  category_id: '',
   location: '',
-  price: 0,
+  price: null,
+  longitude: null,
+  latitude: null,
+  open_time: '',
+  stock: null,
+  is_real_name: 0,
   status: '待审核',
   content: '',
   cover: ''
@@ -151,7 +195,22 @@ const formData = reactive({
 // 景区列表数据
 const scenicList = ref([])
 
-// 获取所有景区总数（不分页、不筛选）
+// 获取分类列表（用于筛选和新增表单）
+const fetchCategoryOptions = async () => {
+  try {
+    const res = await getCategoryList({ page: 1, size: 100 })
+    if (res.code === 200) {
+      categoryOptions.value = (res.data.list || []).map((item) => ({
+        label: item.category_name,
+        value: item.id
+      }))
+    }
+  } catch (error) {
+    console.log('获取分类选项失败', error)
+  }
+}
+
+// 获取所有景区总数
 const fetchGrandTotal = async () => {
   try {
     const res = await getSpotList({ page: 1, size: 1 })
@@ -161,7 +220,7 @@ const fetchGrandTotal = async () => {
   }
 }
 
-// 获取统计数据（待审核、已下架数量）
+// 获取统计数据
 const fetchStats = async () => {
   try {
     const [pendingRes, offlineRes] = await Promise.all([
@@ -175,7 +234,7 @@ const fetchStats = async () => {
   }
 }
 
-// 获取景区列表（支持筛选和分页）
+// 获取景区列表
 const fetchSpotList = async () => {
   try {
     const params = {
@@ -183,37 +242,29 @@ const fetchSpotList = async () => {
       size: pageSize.value
     }
 
-    // 搜索关键词
     if (searchKeyword.value) {
       params.keyword = searchKeyword.value
     }
 
-    // 分类筛选
-    if (categoryFilter.value) {
-      params.category = categoryFilter.value
+    if (categoryFilter.value !== '') {
+      params.category_id = Number(categoryFilter.value)
     }
 
-    // 状态筛选
     if (statusFilter.value !== '') {
       params.status = Number(statusFilter.value)
     }
 
-    console.log('请求参数:', params)
-
     const res = await getSpotList(params)
-
-    console.log('景区列表:', res.data)
 
     scenicList.value = res.data.list.map((item) => ({
       id: item.id,
-      name: item.scenic_name,
-      category: item.category_name,
-      cover: item.cover_image,
+      name: item.scenic_name || item.scenicName,
+      category: item.category_name || item.categoryName,
+      cover: item.cover_image || item.coverImage,
       location: item.location,
       price: item.price,
       status: item.status === 0 ? '待审核' : item.status === 1 ? '已上架' : '已下架',
-      createTime: item.create_time,
-      desc: item.description || '',
+      createTime: item.create_time || item.createTime || '',
       score: item.score || '0'
     }))
 
@@ -223,10 +274,24 @@ const fetchSpotList = async () => {
   }
 }
 
+// 格式化日期
+const formatDate = (time) => {
+  if (!time) return '--'
+  return time.replace('T', ' ').split(' ')[0]
+}
+
+// 格式化时间
+const formatTime = (time) => {
+  if (!time) return ''
+  const parts = time.replace('T', ' ').split(' ')
+  return parts[1] || ''
+}
+
 onMounted(() => {
-  fetchGrandTotal() // 总数不随搜索变化
-  fetchSpotList() // 列表随搜索变化
-  fetchStats() // 待审核和已下架数量
+  fetchCategoryOptions()
+  fetchGrandTotal()
+  fetchSpotList()
+  fetchStats()
 })
 
 // 搜索
@@ -256,9 +321,14 @@ const openAddDialog = () => {
   currentScenicId.value = null
   formData.name = ''
   formData.desc = ''
-  formData.category = '自然风光'
+  formData.category_id = ''
   formData.location = ''
-  formData.price = 0
+  formData.price = null
+  formData.longitude = null
+  formData.latitude = null
+  formData.open_time = ''
+  formData.stock = null
+  formData.is_real_name = 0
   formData.status = '待审核'
   formData.content = ''
   formData.cover = ''
@@ -272,18 +342,21 @@ const openEditDialog = async (item) => {
     currentScenicId.value = item.id
 
     const res = await getSpotDetail(item.id)
-    console.log(JSON.stringify(res, null, 2))
-
     const detail = res.data
 
-    formData.name = detail.scenic_name || ''
+    formData.name = detail.scenic_name || detail.scenicName || ''
     formData.desc = detail.description || ''
-    formData.category = detail.category_name || ''
+    formData.category_id = detail.category_id || detail.categoryId || ''
     formData.location = detail.location || ''
-    formData.price = detail.price || 0
+    formData.price = detail.price != null ? detail.price : null
+    formData.longitude = detail.longitude != null ? detail.longitude : null
+    formData.latitude = detail.latitude != null ? detail.latitude : null
+    formData.open_time = detail.open_time || detail.openTime || ''
+    formData.stock = detail.stock != null ? detail.stock : null
+    formData.is_real_name = detail.is_real_name ?? detail.isRealName ?? 0
     formData.status = detail.status === 0 ? '待审核' : detail.status === 1 ? '已上架' : '已下架'
     formData.content = detail.description || ''
-    formData.cover = detail.cover_image || ''
+    formData.cover = detail.cover_image || detail.coverImage || ''
 
     dialogVisible.value = true
   } catch (error) {
@@ -294,98 +367,59 @@ const openEditDialog = async (item) => {
 // 提交表单
 const handleSubmit = async (data) => {
   try {
+    const submitData = {
+      scenic_name: data.name,
+      description: data.desc,
+      category_id: data.category_id,
+      location: data.location,
+      price: data.price,
+      longitude: data.longitude,
+      latitude: data.latitude,
+      open_time: data.open_time,
+      stock: data.stock,
+      isrealname: data.is_real_name,
+      cover_image: data.cover
+    }
+
     if (isEdit.value) {
-      await updateSpot(currentScenicId.value, {
-        scenic_name: data.name,
-        description: data.desc,
-        category_name: data.category,
-        location: data.location,
-        price: data.price,
-        status: data.status === '待审核' ? 0 : data.status === '已上架' ? 1 : 2,
-        cover_image: data.cover
-      })
-
+      submitData.status = data.status === '待审核' ? 0 : data.status === '已上架' ? 1 : 2
+      await updateSpot(currentScenicId.value, submitData)
       ElMessage.success('更新成功')
-
-      const index = scenicList.value.findIndex((item) => item.id === currentScenicId.value)
-      if (index !== -1) {
-        scenicList.value.splice(index, 1, {
-          ...scenicList.value[index],
-          name: data.name,
-          desc: data.desc,
-          category: data.category,
-          location: data.location,
-          price: data.price,
-          status: data.status,
-          cover: data.cover
-        })
-      }
-
-      // 刷新统计数据
-      fetchStats()
     } else {
-      await addSpot({
-        scenic_name: data.name,
-        description: data.desc,
-        category_name: data.category,
-        location: data.location,
-        price: data.price,
-        status: data.status === '待审核' ? 0 : data.status === '已上架' ? 1 : 2,
-        cover_image: data.cover
-      })
-
+      await addSpot(submitData)
       ElMessage.success('新增成功')
-
-      // 更新总数和统计数据
-      fetchGrandTotal()
-      fetchStats()
-
-      // 刷新列表
-      fetchSpotList()
     }
 
     dialogVisible.value = false
+    fetchSpotList()
+    fetchGrandTotal()
+    fetchStats()
   } catch (error) {
     console.log(error)
     ElMessage.error('操作失败')
   }
 }
 
-// 关闭弹窗
+// 关闭弹窗 - 不清空表单，保留外部传入的 formData
 const handleCloseDialog = () => {
-  formData.name = ''
-  formData.desc = ''
-  formData.category = '自然风光'
-  formData.location = ''
-  formData.price = 0
-  formData.status = '待审核'
-  formData.content = ''
-  formData.cover = ''
+  // 不额外处理，FormDialog 会自己重置
 }
 
 // 删除景区
 const handleDelete = async (item) => {
   try {
-    const confirmDelete = confirm(`确定要删除景区「${item.name}」吗？`)
-    if (!confirmDelete) return
+    if (!confirm(`确定要删除景区「${item.name}」吗？`)) return
 
     await deleteSpot(item.id)
     ElMessage.success('删除成功')
 
-    const index = scenicList.value.findIndex((s) => s.id === item.id)
-    if (index !== -1) {
-      scenicList.value.splice(index, 1)
+    // 如果删除的是最后一页的最后一条，回退一页
+    if (scenicList.value.length === 1 && currentPage.value > 1) {
+      currentPage.value--
     }
-
-    // 更新总数和统计数据
+    fetchSpotList()
     fetchGrandTotal()
     fetchStats()
-
-    // 如果当前页没有数据了，回到上一页
-    if (scenicList.value.length === 0 && currentPage.value > 1) {
-      currentPage.value--
-      fetchSpotList()
-    }
   } catch (error) {
     console.log(error)
     ElMessage.error('删除失败')
@@ -462,11 +496,9 @@ const handleDelete = async (item) => {
 
           <select v-model="categoryFilter" class="select" @change="handleSearch">
             <option value="">全部分类</option>
-            <option value="自然风光">自然风光</option>
-            <option value="历史古迹">历史古迹</option>
-            <option value="主题乐园">主题乐园</option>
-            <option value="城市地标">城市地标</option>
-            <option value="海滨度假">海滨度假</option>
+            <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
           </select>
 
           <select v-model="statusFilter" class="select" @change="handleSearch">
@@ -491,7 +523,8 @@ const handleDelete = async (item) => {
         <thead>
           <tr>
             <th>序号</th>
-            <th>景区信息</th>
+            <th>封面</th>
+            <th>名称</th>
             <th>分类</th>
             <th>所在地</th>
             <th>门票价格</th>
@@ -505,14 +538,11 @@ const handleDelete = async (item) => {
           <tr v-for="(item, index) in scenicList" :key="item.id">
             <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
             <td>
-              <div class="scenic-info">
-                <img v-if="item.cover" :src="item.cover" alt="" />
-                <div v-else class="spot-cover">景区</div>
-                <div>
-                  <h4>{{ item.name }}</h4>
-                  <p>{{ item.desc }}</p>
-                </div>
-              </div>
+              <img v-if="item.cover" :src="item.cover" class="cover-img" alt="" />
+              <div v-else class="spot-cover" style="width:50px;height:50px;font-size:10px">景区</div>
+            </td>
+            <td>
+              <h4 class="spot-name">{{ item.name }}</h4>
             </td>
             <td>
               <span class="category-tag">{{ item.category }}</span>
@@ -540,7 +570,10 @@ const handleDelete = async (item) => {
                 {{ item.status }}
               </span>
             </td>
-            <td>{{ item.createTime }}</td>
+            <td class="time-cell">
+              <div>{{ formatDate(item.createTime) }}</div>
+              <div class="time-sub">{{ formatTime(item.createTime) }}</div>
+            </td>
             <td>
               <div class="actions">
                 <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
@@ -549,7 +582,7 @@ const handleDelete = async (item) => {
             </td>
           </tr>
           <tr v-if="scenicList.length === 0">
-            <td colspan="9" class="empty-cell">暂无数据</td>
+            <td colspan="10" class="empty-cell">暂无数据</td>
           </tr>
         </tbody>
       </table>
@@ -765,6 +798,20 @@ page-header {
 }
 
 /* 表格 */
+.cover-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.spot-name {
+  color: #14263f;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
 .spot-cover {
   width: 90px;
   height: 60px;
@@ -800,6 +847,11 @@ page-header {
   text-align: center;
   color: #94a3b8;
   padding: 48px !important;
+}
+
+.time-sub {
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .scenic-info {

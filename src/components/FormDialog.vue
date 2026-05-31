@@ -69,8 +69,12 @@
             @change="(e) => handleSelect(field, e.target.value)"
           >
             <option value="">请选择</option>
-            <option v-for="opt in field.options" :key="opt" :value="opt">
-              {{ opt }}
+            <option
+              v-for="opt in field.options"
+              :key="typeof opt === 'object' ? opt.value : opt"
+              :value="typeof opt === 'object' ? opt.value : opt"
+            >
+              {{ typeof opt === 'object' ? opt.label : opt }}
             </option>
           </select>
 

@@ -127,11 +127,32 @@ let categoryList = [
 /**
  * 获取列表（支持分页、搜索、状态筛选）
  */
-Mock.mock(/\/admin\/category\/list/, 'get', () => {
+Mock.mock(/\/admin\/category\/list/, 'get', (options) => {
+  const url = new URL(options.url, 'http://localhost')
+  const status = url.searchParams.get('status')
+  const page = Number(url.searchParams.get('page')) || 1
+  const size = Number(url.searchParams.get('size')) || 10
+
+  let list = [...categoryList]
+
+  if (status !== null) {
+    list = list.filter((item) => item.status === Number(status))
+  }
+
+  const total = list.length
+  const start = (page - 1) * size
+  const end = start + size
+  const pageList = list.slice(start, end)
+
   return {
     code: 200,
     message: 'success',
-    data: categoryList
+    data: {
+      list: pageList,
+      total,
+      page,
+      size
+    }
   }
 })
 /**

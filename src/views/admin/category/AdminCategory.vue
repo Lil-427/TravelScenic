@@ -1,10 +1,10 @@
 <script setup>
 /**
  * 景区分类管理页面
- * 功能：分类的增删改查、筛选搜索、前端分页
+ * 功能：分类的增删改查、筛选搜索、服务端分页
  */
 
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Grid, TrendCharts, Location, Hide, Search } from '@element-plus/icons-vue'
 import Pagination from '../../../components/Pagination.vue'
 import CategoryDialog from '../../../components/CategoryDialog.vue'
@@ -17,89 +17,37 @@ import {
 } from '@/api/admin/category'
 
 // ==================== 分页相关 ====================
-const currentPage = ref(1) // 当前页码，默认第1页
-const pageSize = ref(5) // 每页显示条数，默认5条
-const total = ref(0) // 数据总条数
+const currentPage = ref(1)
+const pageSize = ref(5)
+const total = ref(0)
 
 // ==================== 弹窗相关 ====================
-const dialogVisible = ref(false) // 弹窗是否显示
-const isEdit = ref(false) // 是否为编辑模式（false=新增，true=编辑）
-const currentCategoryId = ref(null) // 当前编辑的分类ID
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentCategoryId = ref(null)
 
 // ==================== 筛选相关 ====================
-const searchKeyword = ref('') // 搜索关键词
-const statusFilter = ref('全部状态') // 状态筛选：全部状态/启用中/已禁用
+const searchKeyword = ref('')
+const statusFilter = ref('全部状态')
 
 // ==================== 表单数据 ====================
 const formModel = reactive({
-  name: '', // 分类名称
-  desc: '', // 分类描述
-  sort: 0, // 排序号
-  status: '启用中', // 状态（启用中/已禁用）
-  icon: '' // 图标URL
+  name: '',
+  desc: '',
+  sort: 0,
+  status: '启用中',
+  icon: ''
 })
 
 // ==================== 数据列表 ====================
-const categoryList = ref([]) // 原始分类数据（从后端获取的全部数据）
+const categoryList = ref([])
 
 // ==================== 计算属性 ====================
 
-/**
- * 弹窗标题（根据新增/编辑模式动态变化）
- */
 const dialogTitle = computed(() => (isEdit.value ? '编辑分类' : '新增分类'))
-
-/**
- * 前端筛选后的列表
- * 处理逻辑：
- * 1. 先按搜索关键词筛选（模糊匹配分类名称，不区分大小写）
- * 2. 再按状态筛选（启用中/已禁用/全部）
- */
-const filteredCategoryList = computed(() => {
-  let list = categoryList.value
-
-  // 搜索筛选（模糊匹配）
-  if (searchKeyword.value.trim()) {
-    const keyword = searchKeyword.value.trim().toLowerCase()
-    list = list.filter((item) => item.category_name.toLowerCase().includes(keyword))
-  }
-
-  // 状态筛选
-  if (statusFilter.value === '启用中') {
-    list = list.filter((item) => item.status === 1) // status=1 表示启用
-  } else if (statusFilter.value === '已禁用') {
-    list = list.filter((item) => item.status === 0) // status=0 表示禁用
-  }
-
-  return list
-})
-
-/**
- * 前端分页后的列表
- * 根据当前页码和每页条数，截取对应范围的数据
- */
-const paginatedList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value // 起始索引
-  const end = start + pageSize.value // 结束索引
-  return filteredCategoryList.value.slice(start, end) // slice 截取当前页数据
-})
 
 // ==================== 辅助函数 ====================
 
-/**
- * 获取下一个排序号
- * 规则：当前最大排序号 + 1，如果没有数据则返回 1
- */
-const getNextSortOrder = () => {
-  if (categoryList.value.length === 0) return 1
-  const maxSort = Math.max(...categoryList.value.map((item) => item.sort_order))
-  return maxSort + 1
-}
-
-/**
- * 重置表单数据
- * 用于关闭弹窗或打开新增弹窗时清空上次的数据
- */
 const resetFormData = () => {
   formModel.name = ''
   formModel.desc = ''
@@ -110,28 +58,13 @@ const resetFormData = () => {
 
 // ==================== 业务函数 ====================
 
-/**
- * 打开新增弹窗
- * 1. 设置为新增模式
- * 2. 清空表单
- * 3. 自动分配排序号
- * 4. 显示弹窗
- */
 const openAddDialog = () => {
   isEdit.value = false
   currentCategoryId.value = null
   resetFormData()
-  formModel.sort = getNextSortOrder() // 自动分配排序号
   dialogVisible.value = true
 }
 
-/**
- * 打开编辑弹窗
- * 1. 设置为编辑模式
- * 2. 调用详情接口获取数据
- * 3. 填充表单（注意状态需要转换：1→启用中，0→已禁用）
- * 4. 显示弹窗
- */
 const openEditDialog = async (category) => {
   isEdit.value = true
   currentCategoryId.value = category.id
@@ -145,7 +78,7 @@ const openEditDialog = async (category) => {
       formModel.name = detail.category_name
       formModel.desc = detail.description
       formModel.sort = detail.sort_order
-      formModel.status = detail.status === 1 ? '启用中' : '已禁用' // 状态转换
+      formModel.status = detail.status === 1 ? '启用中' : '已禁用'
       formModel.icon = detail.icon_url
     }
   } catch (error) {
@@ -153,28 +86,26 @@ const openEditDialog = async (category) => {
   }
 }
 
-/**
- * 获取分类列表
- * 一次性获取所有数据，后续筛选和分页都在前端完成
- */
 const fetchCategoryList = async () => {
-  const res = await getCategoryList() // 不传分页参数，获取全部
+  const params = {
+    page: currentPage.value,
+    size: pageSize.value
+  }
+  // 状态筛选
+  if (statusFilter.value === '启用中') {
+    params.status = 1
+  } else if (statusFilter.value === '已禁用') {
+    params.status = 0
+  }
+  const res = await getCategoryList(params)
   if (res.code === 200) {
-    categoryList.value = res.data // 存储全部数据
-    total.value = res.data.length // 更新总数
+    categoryList.value = res.data.list
+    total.value = res.data.total
   }
 }
 
-/**
- * 提交表单（新增/编辑）
- * 1. 构建提交数据
- * 2. 根据 isEdit 判断调用新增还是编辑接口
- * 3. 注意状态转换：启用中→1，已禁用→0
- * 4. 成功后关闭弹窗并刷新列表
- */
 const handleSubmit = async (data) => {
   try {
-    // 构建提交数据
     const submitData = {
       category_name: data.name,
       description: data.desc,
@@ -182,80 +113,62 @@ const handleSubmit = async (data) => {
       sort_order: data.sort
     }
 
-    let res
-
-    // 状态转换：启用中→1，已禁用→0
-    submitData.status = data.status === '启用中' ? 1 : 0
-
     if (isEdit.value) {
-      res = await updateCategory(currentCategoryId.value, submitData)
+      submitData.status = data.status === '启用中' ? 1 : 0
+      await updateCategory(currentCategoryId.value, submitData)
     } else {
-      res = await addCategory(submitData)
+      await addCategory(submitData)
     }
 
-    if (res.code === 200) {
-      dialogVisible.value = false // 关闭弹窗
-      fetchCategoryList() // 刷新列表
-    }
+    dialogVisible.value = false
+    fetchCategoryList()
   } catch (error) {
     console.error('操作失败', error)
   }
 }
 
-/**
- * 删除分类
- * 1. 弹出确认框
- * 2. 调用删除接口
- * 3. 成功后刷新列表
- */
 const handleDelete = async (item) => {
   if (!confirm(`确定要删除分类「${item.category_name}」吗？`)) return
   try {
     const res = await deleteCategory(item.id)
     if (res.code === 200) {
-      fetchCategoryList() // 刷新列表
+      // 如果删除后当前页没数据了，回到上一页
+      if (categoryList.value.length === 1 && currentPage.value > 1) {
+        currentPage.value--
+      }
+      fetchCategoryList()
     }
   } catch (error) {
     console.error('删除失败', error)
   }
 }
 
-/**
- * 分页切换
- * 只更新当前页码，数据由 paginatedList 计算属性自动响应
- */
 const handlePageChange = (page) => {
   currentPage.value = page
+  fetchCategoryList()
 }
 
-/**
- * 重置筛选条件
- * 清空搜索框，状态下拉恢复为"全部状态"
- */
+// 搜索
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchCategoryList()
+}
+
+// 状态筛选变化
+const handleStatusChange = () => {
+  currentPage.value = 1
+  fetchCategoryList()
+}
+
 const resetFilters = () => {
   searchKeyword.value = ''
   statusFilter.value = '全部状态'
+  currentPage.value = 1
+  fetchCategoryList()
 }
-
-// ==================== 监听器 ====================
-
-/**
- * 监听筛选后的列表变化
- * 作用：当筛选结果变化时，如果当前页码超出总页数，自动调整到最后一页
- * 例如：筛选后只有5条数据（1页），但当前在第2页，则自动跳回第1页
- */
-watch(filteredCategoryList, (newList) => {
-  const totalPages = Math.ceil(newList.length / pageSize.value)
-  if (currentPage.value > totalPages) {
-    currentPage.value = Math.max(1, totalPages) // 跳转到最后一页，至少为第1页
-  }
-})
 
 // ==================== 生命周期 ====================
 
-/**
- * 页面加载时获取分类列表
- */
 onMounted(() => {
   fetchCategoryList()
 })
@@ -317,7 +230,7 @@ onMounted(() => {
       <div class="stats-card">
         <div>
           <p>禁用分类</p>
-          <h2>{{ filteredCategoryList.filter((item) => item.status === 0).length }}</h2>
+          <h2>{{ categoryList.filter((item) => item.status === 0).length }}</h2>
           <span class="danger">未展示</span>
         </div>
         <div class="icon red">
@@ -337,7 +250,7 @@ onMounted(() => {
             <input v-model="searchKeyword" placeholder="搜索分类名称" />
           </div>
           <!-- 状态下拉框 -->
-          <select v-model="statusFilter" class="select">
+          <select v-model="statusFilter" class="select" @change="handleStatusChange">
             <option>全部状态</option>
             <option>启用中</option>
             <option>已禁用</option>
@@ -351,24 +264,21 @@ onMounted(() => {
       <table class="category-table">
         <thead>
           <tr>
-            <th>分类信息</th>
+            <th>名称</th>
+            <th>描述</th>
             <th>分类图标</th>
             <th>排序</th>
             <th>状态</th>
             <th>操作</th>
           </tr>
         </thead>
-        <tbody v-if="paginatedList.length">
-          <!-- 遍历分页后的列表 -->
-          <tr v-for="item in paginatedList" :key="item.id">
-            <!-- 分类信息：名称 + 描述 -->
+        <tbody v-if="categoryList.length">
+          <tr v-for="item in categoryList" :key="item.id">
+        <td>
+              <h4 class="cat-name">{{ item.category_name }}</h4>
+            </td>
             <td>
-              <div class="category-info">
-                <div class="category-name">
-                  <h4>{{ item.category_name }}</h4>
-                  <p>{{ item.description }}</p>
-                </div>
-              </div>
+              <p class="cat-desc">{{ item.description }}</p>
             </td>
             <!-- 分类图标 -->
             <td>
@@ -396,17 +306,17 @@ onMounted(() => {
         <!-- 空状态 -->
         <tbody v-else>
           <tr>
-            <td colspan="5">
+            <td colspan="6">
               <div class="empty-box">暂无数据</div>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <!-- 分页组件：只在有数据时显示 -->
+      <!-- 分页组件 -->
       <Pagination
-        v-if="filteredCategoryList.length > 0"
-        :total="filteredCategoryList.length"
+        v-if="total > 0"
+        :total="total"
         :current="currentPage"
         :page-size="pageSize"
         @update:current="handlePageChange"
@@ -627,17 +537,20 @@ onMounted(() => {
   border-bottom: 1px solid #f1f5f9;
 }
 
-/* 分类信息区域 */
-.category-name h4 {
+.cat-name {
   color: #14263f;
   font-size: 15px;
-  margin: 0 0 6px 0;
+  margin: 0;
 }
 
-.category-name p {
-  margin: 0;
+.cat-desc {
   color: #94a3b8;
   font-size: 13px;
+  margin: 0;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 图标预览 */

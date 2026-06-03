@@ -69,18 +69,18 @@
             <el-icon><Search /></el-icon>
             <input placeholder="搜索订单号/用户" />
           </div>
-          <select class="select">
-            <option>全部状态</option>
-            <option>已支付</option>
-            <option>待支付</option>
-            <option>已取消</option>
-          </select>
-          <select class="select">
-            <option>全部景区</option>
-            <option>九寨沟</option>
-            <option>黄山</option>
-            <option>西湖</option>
-          </select>
+          <el-select size="large" style="width: 130px" placeholder="全部状态">
+            <el-option label="全部状态" value="全部状态" />
+            <el-option label="已支付" value="已支付" />
+            <el-option label="待支付" value="待支付" />
+            <el-option label="已取消" value="已取消" />
+          </el-select>
+          <el-select size="large" style="width: 130px" placeholder="全部景区">
+            <el-option label="全部景区" value="全部景区" />
+            <el-option label="九寨沟" value="九寨沟" />
+            <el-option label="黄山" value="黄山" />
+            <el-option label="西湖" value="西湖" />
+          </el-select>
         </div>
       </div>
 
@@ -474,14 +474,6 @@ const handleExport = () => {
   outline: none;
   background: transparent;
   flex: 1;
-}
-
-.select {
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 0 14px;
-  background: #fff;
 }
 
 /* 表格 */

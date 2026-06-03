@@ -276,11 +276,11 @@ onMounted(() => {
             <input v-model="searchKeyword" placeholder="搜索分类名称" @keyup.enter="handleSearch" />
           </div>
           <!-- 状态下拉框 -->
-          <select v-model="statusFilter" class="select" @change="handleStatusChange">
-            <option>全部状态</option>
-            <option>启用中</option>
-            <option>已禁用</option>
-          </select>
+          <el-select v-model="statusFilter" size="large" style="width: 130px" placeholder="全部状态" @change="handleStatusChange">
+            <el-option label="全部状态" value="全部状态" />
+            <el-option label="启用中" value="启用中" />
+            <el-option label="已禁用" value="已禁用" />
+          </el-select>
           <!-- 重置按钮 -->
           <button class="reset-btn" @click="resetFilters">重置</button>
         </div>
@@ -525,15 +525,6 @@ onMounted(() => {
   outline: none;
   background: transparent;
   flex: 1;
-}
-
-/* 下拉框 */
-.select {
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 0 14px;
-  background: #fff;
 }
 
 .reset-btn {

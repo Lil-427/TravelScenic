@@ -23,13 +23,7 @@
         </router-link>
       </div>
 
-      <div class="sidebar-banner">
-        <img src="../../../assets/banner-watercolor.png" class="sidebar-banner-img" />
-        <div class="sidebar-text">
-          <h3>探索自然之美</h3>
-          <p>开启美好旅程</p>
-        </div>
-      </div>
+      <img :src="sidebarBg" class="sidebar-watermark" />
     </aside>
 
     <!-- 右侧主区域 -->
@@ -65,6 +59,7 @@ import {
   UserFilled,
   Bell
 } from '@element-plus/icons-vue'
+import sidebarBg from '@/assets/sidebar-watercolor1.png'
 
 const menuItems = [
   { name: 'adminDashboard', label: '首页', icon: House },
@@ -106,6 +101,16 @@ const menuItems = [
   position: sticky;
   top: 0;
   overflow-y: auto;
+}
+
+.sidebar-watermark {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .logo-box {
@@ -167,35 +172,6 @@ const menuItems = [
   background: #eefaf5;
   color: #18b57d;
   font-weight: 600;
-}
-
-.sidebar-banner {
-  margin-top: auto;
-  position: relative;
-  height: 280px;
-  border-radius: 28px;
-  overflow: hidden;
-}
-.sidebar-banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.sidebar-text {
-  position: absolute;
-  left: 20px;
-  bottom: 20px;
-  z-index: 2;
-}
-.sidebar-text h3 {
-  color: #18b57d;
-  font-size: 22px;
-  font-weight: 800;
-}
-.sidebar-text p {
-  margin-top: 6px;
-  color: #94a3b8;
-  font-size: 13px;
 }
 
 /* ========= 右侧主区域样式 ========= */
@@ -317,5 +293,68 @@ const menuItems = [
     width: 32px;
     height: 32px;
   }
+}
+</style>
+
+<!-- 全局 el-select 绿色主题（覆盖所有 admin 页面） -->
+<style>
+/* ===== Element Plus 主色变量覆盖 ===== */
+.admin-layout {
+  --el-color-primary: #18b57d;
+  --el-color-primary-light-3: #46c99a;
+  --el-color-primary-light-5: #74d8b1;
+  --el-color-primary-light-7: #a2e7c8;
+  --el-color-primary-light-8: #b9eed6;
+  --el-color-primary-light-9: #d1f5e4;
+  --el-color-primary-dark-2: #139064;
+}
+
+/* 输入框默认边框 */
+.el-select .el-input__wrapper {
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px #e2e8f0 !important;
+  transition: all 0.2s;
+}
+
+/* 下拉框选中值和输入文字居中 */
+.el-select .el-input__inner {
+  text-align: center !important;
+}
+
+/* 下拉选项居中 */
+.el-select-dropdown__item {
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.el-select .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px #18b57d !important;
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px #18b57d !important;
+}
+
+/* 下拉箭头 */
+.el-select .el-input.is-focus .el-select__caret {
+  color: #18b57d !important;
+}
+
+/* 下拉面板 - 选中项 */
+.el-select-dropdown__item.is-selected {
+  background: rgba(24, 181, 125, 0.08) !important;
+  color: #18b57d !important;
+  font-weight: 600;
+}
+
+/* 下拉面板 - hover */
+.el-select-dropdown__item:hover {
+  background: rgba(24, 181, 125, 0.06) !important;
+}
+
+/* 多选 tag 背景 */
+.el-select .el-tag {
+  background: rgba(24, 181, 125, 0.1);
+  color: #18b57d;
 }
 </style>

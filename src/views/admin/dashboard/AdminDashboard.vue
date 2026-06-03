@@ -7,7 +7,7 @@
         <p>旅游景区管理系统后台</p>
         <span>高效管理 · 轻松运营</span>
       </div>
-      <img src="@/assets/banner-watercolor.png" class="welcome-bg" />
+      <img :src="welcomeBg" class="welcome-bg" />
     </section>
 
     <!-- 统计卡片 -->
@@ -179,6 +179,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import welcomeBg from '@/assets/banner-watercolor.png'
 import {
   User,
   Tickets,
@@ -238,8 +239,9 @@ const goTo = (name) => {
   position: absolute;
   right: 0;
   top: 0;
+  width: 60%;
   height: 100%;
-  width: auto;
+  object-fit: cover;
   opacity: 0.3;
   z-index: 1;
 }

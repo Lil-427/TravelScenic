@@ -74,21 +74,21 @@
             />
           </div>
 
-          <select v-model="statusFilter" class="select">
-            <option value="">全部状态</option>
-            <option value="已通过">已通过</option>
-            <option value="待审核">待审核</option>
-            <option value="已屏蔽">已屏蔽</option>
-          </select>
+          <el-select v-model="statusFilter" size="large" style="width: 130px" placeholder="全部状态">
+            <el-option label="全部状态" value="" />
+            <el-option label="已通过" value="已通过" />
+            <el-option label="待审核" value="待审核" />
+            <el-option label="已屏蔽" value="已屏蔽" />
+          </el-select>
 
-          <select v-model="scoreFilter" class="select">
-            <option value="">全部评分</option>
-            <option value="5">5星</option>
-            <option value="4">4星</option>
-            <option value="3">3星</option>
-            <option value="2">2星</option>
-            <option value="1">1星</option>
-          </select>
+          <el-select v-model="scoreFilter" size="large" style="width: 130px" placeholder="全部评分">
+            <el-option label="全部评分" value="" />
+            <el-option label="5星" value="5" />
+            <el-option label="4星" value="4" />
+            <el-option label="3星" value="3" />
+            <el-option label="2星" value="2" />
+            <el-option label="1星" value="1" />
+          </el-select>
 
           <button class="search-btn" @click="handleSearch">搜索</button>
           <button class="reset-btn" @click="handleReset">重置</button>
@@ -596,15 +596,6 @@ const handleExport = () => {
   outline: none;
   background: transparent;
   flex: 1;
-}
-
-.select {
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 0 14px;
-  background: #fff;
-  cursor: pointer;
 }
 
 .search-btn,

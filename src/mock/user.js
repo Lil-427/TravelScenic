@@ -105,28 +105,28 @@ const userList = [
 ]
 
 /**
- * 获取用户列表（支持分页、用户名搜索、手机号搜索、状态筛选）
+ * 获取用户列表（支持分页、全局模糊搜索、状态筛选）
  * GET /admin/user/list
  */
 Mock.mock(/\/admin\/user\/list(\?.*)?$/, 'get', (options) => {
   const url = new URL(options.url, 'http://localhost')
 
-  const username = url.searchParams.get('username')
-  const phone = url.searchParams.get('phone')
+  const keyword = url.searchParams.get('keyword')
   const status = url.searchParams.get('status')
   const page = Number(url.searchParams.get('page')) || 1
   const size = Number(url.searchParams.get('size')) || 10
 
   let list = [...userList]
 
-  // 按用户名搜索
-  if (username) {
-    list = list.filter((item) => item.username.includes(username))
-  }
-
-  // 按手机号搜索
-  if (phone) {
-    list = list.filter((item) => item.phone.includes(phone))
+  // 全局模糊搜索：用户名、昵称、手机号
+  if (keyword) {
+    const kw = keyword.toLowerCase()
+    list = list.filter(
+      (item) =>
+        item.username.toLowerCase().includes(kw) ||
+        item.nickname.toLowerCase().includes(kw) ||
+        item.phone.includes(kw)
+    )
   }
 
   // 状态筛选

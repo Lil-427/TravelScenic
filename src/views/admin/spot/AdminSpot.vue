@@ -494,19 +494,17 @@ const handleDelete = async (item) => {
             <input v-model="searchKeyword" placeholder="搜索景区名称" @keyup.enter="handleSearch" />
           </div>
 
-          <select v-model="categoryFilter" class="select" @change="handleSearch">
-            <option value="">全部分类</option>
-            <option v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
+          <el-select v-model="categoryFilter" size="large" style="width: 150px" placeholder="全部分类" @change="handleSearch">
+            <el-option label="全部分类" value="" />
+            <el-option v-for="opt in categoryOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
 
-          <select v-model="statusFilter" class="select" @change="handleSearch">
-            <option value="">全部状态</option>
-            <option value="1">已上架</option>
-            <option value="0">待审核</option>
-            <option value="2">已下架</option>
-          </select>
+          <el-select v-model="statusFilter" size="large" style="width: 130px" placeholder="全部状态" @change="handleSearch">
+            <el-option label="全部状态" value="" />
+            <el-option label="已上架" value="1" />
+            <el-option label="待审核" value="0" />
+            <el-option label="已下架" value="2" />
+          </el-select>
 
           <button class="reset-btn" @click="handleReset">重置</button>
         </div>
@@ -768,15 +766,6 @@ page-header {
   outline: none;
   background: transparent;
   flex: 1;
-}
-
-.select {
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 0 14px;
-  background: #fff;
-  cursor: pointer;
 }
 
 .reset-btn {

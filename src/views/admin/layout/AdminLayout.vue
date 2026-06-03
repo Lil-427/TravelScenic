@@ -319,3 +319,55 @@ const menuItems = [
   }
 }
 </style>
+
+<!-- 全局 el-select 绿色主题（覆盖所有 admin 页面） -->
+<style>
+/* ===== Element Plus 主色变量覆盖 ===== */
+.admin-layout {
+  --el-color-primary: #18b57d;
+  --el-color-primary-light-3: #46c99a;
+  --el-color-primary-light-5: #74d8b1;
+  --el-color-primary-light-7: #a2e7c8;
+  --el-color-primary-light-8: #b9eed6;
+  --el-color-primary-light-9: #d1f5e4;
+  --el-color-primary-dark-2: #139064;
+}
+
+/* 输入框默认边框 */
+.el-select .el-input__wrapper {
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px #e2e8f0 !important;
+  transition: all 0.2s;
+}
+
+.el-select .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px #18b57d !important;
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px #18b57d !important;
+}
+
+/* 下拉箭头 */
+.el-select .el-input.is-focus .el-select__caret {
+  color: #18b57d !important;
+}
+
+/* 下拉面板 - 选中项 */
+.el-select-dropdown__item.is-selected {
+  background: rgba(24, 181, 125, 0.08) !important;
+  color: #18b57d !important;
+  font-weight: 600;
+}
+
+/* 下拉面板 - hover */
+.el-select-dropdown__item:hover {
+  background: rgba(24, 181, 125, 0.06) !important;
+}
+
+/* 多选 tag 背景 */
+.el-select .el-tag {
+  background: rgba(24, 181, 125, 0.1);
+  color: #18b57d;
+}
+</style>

@@ -70,21 +70,21 @@
             <input v-model="searchKeyword" placeholder="搜索攻略标题" @keyup.enter="handleSearch" />
           </div>
 
-          <select v-model="statusFilter" class="select">
-            <option value="">全部状态</option>
-            <option value="已发布">已发布</option>
-            <option value="待审核">待审核</option>
-            <option value="已下架">已下架</option>
-          </select>
+          <el-select v-model="statusFilter" size="large" style="width: 130px" placeholder="全部状态">
+            <el-option label="全部状态" value="" />
+            <el-option label="已发布" value="已发布" />
+            <el-option label="待审核" value="待审核" />
+            <el-option label="已下架" value="已下架" />
+          </el-select>
 
-          <select v-model="categoryFilter" class="select">
-            <option value="">全部分类</option>
-            <option value="热门推荐">热门推荐</option>
-            <option value="自由行">自由行</option>
-            <option value="周边游">周边游</option>
-            <option value="亲子游">亲子游</option>
-            <option value="美食攻略">美食攻略</option>
-          </select>
+          <el-select v-model="categoryFilter" size="large" style="width: 150px" placeholder="全部分类">
+            <el-option label="全部分类" value="" />
+            <el-option label="热门推荐" value="热门推荐" />
+            <el-option label="自由行" value="自由行" />
+            <el-option label="周边游" value="周边游" />
+            <el-option label="亲子游" value="亲子游" />
+            <el-option label="美食攻略" value="美食攻略" />
+          </el-select>
 
           <button class="search-btn" @click="handleSearch">搜索</button>
           <button class="reset-btn" @click="handleReset">重置</button>
@@ -654,15 +654,6 @@ const handleDelete = (item) => {
   outline: none;
   background: transparent;
   flex: 1;
-}
-
-.select {
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 0 14px;
-  background: #fff;
-  cursor: pointer;
 }
 
 .search-btn,

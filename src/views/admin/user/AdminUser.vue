@@ -4,7 +4,6 @@ import { ElMessage } from 'element-plus'
 import {
   Plus,
   Search,
-  Filter,
   User,
   DataAnalysis,
   WarningFilled,
@@ -19,8 +18,7 @@ const pageSize = ref(5)
 const total = ref(0)
 
 // ==================== 筛选相关 ====================
-const searchUsername = ref('')
-const searchPhone = ref('')
+const searchKeyword = ref('')
 const statusFilter = ref('')
 
 // ==================== 弹窗相关 ====================
@@ -105,11 +103,8 @@ const fetchUserList = async () => {
       size: pageSize.value
     }
 
-    if (searchUsername.value.trim()) {
-      params.username = searchUsername.value.trim()
-    }
-    if (searchPhone.value.trim()) {
-      params.phone = searchPhone.value.trim()
+    if (searchKeyword.value.trim()) {
+      params.keyword = searchKeyword.value.trim()
     }
     if (statusFilter.value !== '') {
       params.status = statusFilter.value
@@ -137,8 +132,7 @@ const handleSearch = () => {
 
 // 重置筛选
 const handleReset = () => {
-  searchUsername.value = ''
-  searchPhone.value = ''
+  searchKeyword.value = ''
   statusFilter.value = ''
   currentPage.value = 1
   fetchUserList()
@@ -314,24 +308,22 @@ onMounted(() => {
           <div class="search-box">
             <el-icon><Search /></el-icon>
             <input
-              v-model="searchUsername"
-              placeholder="搜索用户名"
+              v-model="searchKeyword"
+              placeholder="搜索用户名 / 昵称 / 手机号"
               @keyup.enter="handleSearch"
             />
           </div>
-          <div class="search-box">
-            <el-icon><Filter /></el-icon>
-            <input
-              v-model="searchPhone"
-              placeholder="搜索手机号"
-              @keyup.enter="handleSearch"
-            />
-          </div>
-          <select v-model="statusFilter" class="select" @change="handleStatusChange">
-            <option value="">全部状态</option>
-            <option value="1">正常</option>
-            <option value="0">冻结</option>
-          </select>
+          <el-select
+            v-model="statusFilter"
+            size="large"
+            style="width: 130px"
+            placeholder="全部状态"
+            @change="handleStatusChange"
+          >
+            <el-option label="全部状态" value="" />
+            <el-option label="正常" value="1" />
+            <el-option label="冻结" value="0" />
+          </el-select>
           <button class="reset-btn" @click="handleReset">重置</button>
         </div>
         <button class="add-btn" @click="openAddDialog">
@@ -458,19 +450,19 @@ onMounted(() => {
           <!-- 用户类型 -->
           <div class="form-item">
             <label>用户类型</label>
-            <select v-model="localFormData.user_type">
-              <option :value="1">普通用户</option>
-              <option :value="2">管理员</option>
-            </select>
+            <el-select v-model="localFormData.user_type" size="large" style="width: 100%">
+              <el-option label="普通用户" :value="1" />
+              <el-option label="管理员" :value="2" />
+            </el-select>
           </div>
 
           <!-- 账号状态 -->
           <div class="form-item">
             <label>状态</label>
-            <select v-model="localFormData.status">
-              <option :value="1">正常</option>
-              <option :value="0">冻结</option>
-            </select>
+            <el-select v-model="localFormData.status" size="large" style="width: 100%">
+              <el-option label="正常" :value="1" />
+              <el-option label="冻结" :value="0" />
+            </el-select>
           </div>
         </div>
       </div>
@@ -654,22 +646,6 @@ onMounted(() => {
   font-size: 18px;
 }
 
-.select {
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 0 14px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  color: #334155;
-  outline: none;
-}
-
-.select:focus {
-  border-color: #18b57d;
-}
-
 .reset-btn {
   height: 42px;
   padding: 0 20px;
@@ -747,6 +723,8 @@ onMounted(() => {
   border-radius: 30px;
   font-size: 12px;
   font-weight: 500;
+  text-align: center;
+  min-width: 64px;
 }
 
 .type-tag.normal {
@@ -766,6 +744,8 @@ onMounted(() => {
   border-radius: 30px;
   font-size: 12px;
   font-weight: 500;
+  text-align: center;
+  min-width: 48px;
 }
 
 .status-tag.success {
@@ -896,8 +876,7 @@ onMounted(() => {
   color: #ff5d5d;
 }
 
-.form-item input,
-.form-item select {
+.form-item input {
   width: 100%;
   border: 1px solid #e2e8f0;
   background: #fff;
@@ -909,8 +888,7 @@ onMounted(() => {
   height: 48px;
 }
 
-.form-item input:focus,
-.form-item select:focus {
+.form-item input:focus {
   border-color: #18b57d;
   outline: none;
 }

@@ -1,72 +1,338 @@
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import {
+  Plus,
+  Search,
+  Filter,
+  User,
+  DataAnalysis,
+  WarningFilled,
+  Close
+} from '@element-plus/icons-vue'
+import Pagination from '../../../components/Pagination.vue'
+import { getUserList, addUser, updateUser, deleteUser } from '@/api/admin/user'
+
+// ==================== 分页相关 ====================
+const currentPage = ref(1)
+const pageSize = ref(5)
+const total = ref(0)
+
+// ==================== 筛选相关 ====================
+const searchUsername = ref('')
+const searchPhone = ref('')
+const statusFilter = ref('')
+
+// ==================== 弹窗相关 ====================
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const currentUserId = ref(null)
+
+const dialogTitle = computed(() => (isEdit.value ? '编辑用户' : '新增用户'))
+
+// ==================== 表单数据 ====================
+const localFormData = reactive({
+  username: '',
+  nickname: '',
+  phone: '',
+  user_type: 1,
+  status: 1
+})
+
+// ==================== 表单校验 ====================
+const errors = reactive({
+  username: '',
+  phone: ''
+})
+
+const clearError = (field) => {
+  errors[field] = ''
+}
+
+const validate = () => {
+  let isValid = true
+
+  errors.username = ''
+  errors.phone = ''
+
+  if (!localFormData.username || localFormData.username.trim() === '') {
+    errors.username = '用户名不能为空'
+    isValid = false
+  } else if (localFormData.username.length < 2) {
+    errors.username = '用户名至少需要2个字符'
+    isValid = false
+  } else if (localFormData.username.length > 50) {
+    errors.username = '用户名不能超过50个字符'
+    isValid = false
+  }
+
+  if (!localFormData.phone || localFormData.phone.trim() === '') {
+    errors.phone = '手机号码不能为空'
+    isValid = false
+  } else if (localFormData.phone.length !== 11) {
+    errors.phone = '请输入11位手机号'
+    isValid = false
+  }
+
+  return isValid
+}
+
+// ==================== 数据列表 ====================
+const userList = ref([])
+
+// ==================== 统计数据 ====================
+const grandTotal = ref(0)
+const frozenCount = ref(0)
+
+// ==================== 业务函数 ====================
+
+// 重置表单
+const resetFormData = () => {
+  localFormData.username = ''
+  localFormData.nickname = ''
+  localFormData.phone = ''
+  localFormData.user_type = 1
+  localFormData.status = 1
+  errors.username = ''
+  errors.phone = ''
+}
+
+// 获取用户列表
+const fetchUserList = async () => {
+  try {
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value
+    }
+
+    if (searchUsername.value.trim()) {
+      params.username = searchUsername.value.trim()
+    }
+    if (searchPhone.value.trim()) {
+      params.phone = searchPhone.value.trim()
+    }
+    if (statusFilter.value !== '') {
+      params.status = statusFilter.value
+    }
+
+    const res = await getUserList(params)
+
+    if (res.code === 200) {
+      userList.value = res.data.list || []
+      total.value = res.data.total
+      grandTotal.value = res.data.total
+
+      frozenCount.value = userList.value.filter((u) => u.status === 0).length
+    }
+  } catch (error) {
+    console.error('获取用户列表失败', error)
+  }
+}
+
+// 搜索
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchUserList()
+}
+
+// 重置筛选
+const handleReset = () => {
+  searchUsername.value = ''
+  searchPhone.value = ''
+  statusFilter.value = ''
+  currentPage.value = 1
+  fetchUserList()
+}
+
+// 状态筛选变化
+const handleStatusChange = () => {
+  currentPage.value = 1
+  fetchUserList()
+}
+
+// 分页切换
+const handlePageChange = (page) => {
+  currentPage.value = page
+  fetchUserList()
+}
+
+// 打开新增弹窗
+const openAddDialog = () => {
+  isEdit.value = false
+  currentUserId.value = null
+  resetFormData()
+  dialogVisible.value = true
+}
+
+// 打开编辑弹窗
+const openEditDialog = (item) => {
+  isEdit.value = true
+  currentUserId.value = item.id
+  localFormData.username = item.username
+  localFormData.nickname = item.nickname || ''
+  localFormData.phone = item.phone
+  localFormData.user_type = item.user_type
+  localFormData.status = item.status
+  errors.username = ''
+  errors.phone = ''
+  dialogVisible.value = true
+}
+
+// 关闭弹窗
+const handleCloseDialog = () => {
+  dialogVisible.value = false
+  resetFormData()
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  if (!validate()) return
+
+  try {
+    const submitData = {
+      username: localFormData.username,
+      nickname: localFormData.nickname,
+      phone: localFormData.phone,
+      user_type: localFormData.user_type,
+      status: localFormData.status
+    }
+
+    if (isEdit.value) {
+      await updateUser(currentUserId.value, submitData)
+      ElMessage.success('修改成功')
+    } else {
+      await addUser(submitData)
+      ElMessage.success('新增成功')
+    }
+
+    dialogVisible.value = false
+    resetFormData()
+    fetchUserList()
+  } catch (error) {
+    console.error('操作失败', error)
+    ElMessage.error('操作失败')
+  }
+}
+
+// 删除用户
+const handleDelete = async (item) => {
+  if (!confirm(`确定要删除用户「${item.nickname || item.username}」吗？`)) return
+
+  try {
+    const res = await deleteUser(item.id)
+    if (res.code === 200) {
+      ElMessage.success('删除成功')
+      // 如果删除的是最后一页的最后一条，回退一页
+      if (userList.value.length === 1 && currentPage.value > 1) {
+        currentPage.value--
+      }
+      fetchUserList()
+    }
+  } catch (error) {
+    console.error('删除失败', error)
+    ElMessage.error('删除失败')
+  }
+}
+
+// 格式化用户类型
+const formatUserType = (type) => {
+  const map = {
+    1: '普通用户',
+    2: '管理员'
+  }
+  return map[type] || '未知'
+}
+
+// ==================== 生命周期 ====================
+onMounted(() => {
+  fetchUserList()
+})
+</script>
+
 <template>
-  <div class="user-manage">
+  <div class="page-container">
+    <!-- 页面头部 -->
+    <div class="page-header">
+      <div>
+        <h2>用户管理</h2>
+        <p>管理平台注册用户与账号状态</p>
+      </div>
+    </div>
+
     <!-- 数据统计卡片 -->
-    <section class="stats-wrapper">
+    <div class="stats-grid">
       <div class="stats-card">
-        <div class="stats-left">
+        <div>
           <p>总用户数</p>
-          <h2>12,568</h2>
-          <span class="up">+12.5%</span>
+          <h2>{{ grandTotal }}</h2>
+          <span>+12%</span>
         </div>
-        <div class="stats-icon green">
+        <div class="icon green">
           <el-icon><User /></el-icon>
         </div>
       </div>
 
       <div class="stats-card">
-        <div class="stats-left">
+        <div>
           <p>今日新增</p>
           <h2>128</h2>
-          <span class="up">+8.2%</span>
+          <span>增长中</span>
         </div>
-        <div class="stats-icon blue">
+        <div class="icon blue">
           <el-icon><Plus /></el-icon>
         </div>
       </div>
 
       <div class="stats-card">
-        <div class="stats-left">
+        <div>
           <p>活跃用户</p>
           <h2>8,321</h2>
-          <span class="up">+5.6%</span>
+          <span>持续增长</span>
         </div>
-        <div class="stats-icon orange">
+        <div class="icon orange">
           <el-icon><DataAnalysis /></el-icon>
         </div>
       </div>
 
       <div class="stats-card">
-        <div class="stats-left">
+        <div>
           <p>冻结账号</p>
-          <h2>36</h2>
-          <span class="down">-2.1%</span>
+          <h2>{{ frozenCount }}</h2>
+          <span class="danger">需关注</span>
         </div>
-        <div class="stats-icon red">
+        <div class="icon red">
           <el-icon><WarningFilled /></el-icon>
         </div>
       </div>
-    </section>
+    </div>
 
     <!-- 用户列表表格 -->
-    <section class="table-wrapper">
-      <!-- 表格顶部（搜索和新增按钮） -->
-      <div class="table-header">
-        <div class="header-left">
-          <h3>用户列表</h3>
-          <div class="filter-group">
-            <div class="filter-item">
-              <el-icon><Search /></el-icon>
-              <input placeholder="搜索用户名/手机号..." />
-            </div>
-            <div class="filter-item">
-              <el-icon><Filter /></el-icon>
-              <select class="status-select">
-                <option value="">全部状态</option>
-                <option value="正常">正常</option>
-                <option value="冻结">冻结</option>
-              </select>
-            </div>
+    <div class="table-wrapper">
+      <!-- 工具栏 -->
+      <div class="table-toolbar">
+        <div class="filters">
+          <div class="search-box">
+            <el-icon><Search /></el-icon>
+            <input
+              v-model="searchUsername"
+              placeholder="搜索用户名"
+              @keyup.enter="handleSearch"
+            />
           </div>
+          <div class="search-box">
+            <el-icon><Filter /></el-icon>
+            <input
+              v-model="searchPhone"
+              placeholder="搜索手机号"
+              @keyup.enter="handleSearch"
+            />
+          </div>
+          <select v-model="statusFilter" class="select" @change="handleStatusChange">
+            <option value="">全部状态</option>
+            <option value="1">正常</option>
+            <option value="0">冻结</option>
+          </select>
+          <button class="reset-btn" @click="handleReset">重置</button>
         </div>
         <button class="add-btn" @click="openAddDialog">
           <el-icon><Plus /></el-icon>
@@ -80,9 +346,9 @@
           <tr>
             <th>用户信息</th>
             <th>手机号</th>
+            <th>用户类型</th>
             <th>状态</th>
             <th>注册时间</th>
-            <th>最近登录</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -92,300 +358,222 @@
               <div class="user-info">
                 <img :src="item.avatar" />
                 <div>
-                  <h4>{{ item.name }}</h4>
-                  <p>{{ item.email }}</p>
+                  <h4>{{ item.username }}</h4>
+                  <p>{{ item.nickname || '未设置昵称' }}</p>
                 </div>
               </div>
             </td>
             <td>{{ item.phone }}</td>
             <td>
-              <span class="status-tag" :class="item.status === '正常' ? 'success' : 'danger'">
-                {{ item.status }}
+              <span class="type-tag" :class="item.user_type === 2 ? 'admin' : 'normal'">
+                {{ formatUserType(item.user_type) }}
               </span>
             </td>
-            <td>{{ item.registerTime }}</td>
-            <td>{{ item.lastLogin }}</td>
             <td>
-              <div class="action-group">
+              <span class="status-tag" :class="item.status === 1 ? 'success' : 'danger'">
+                {{ item.status === 1 ? '正常' : '冻结' }}
+              </span>
+            </td>
+            <td>{{ item.create_time }}</td>
+            <td>
+              <div class="actions">
                 <button class="edit-btn" @click="openEditDialog(item)">编辑</button>
                 <button class="delete-btn" @click="handleDelete(item)">删除</button>
               </div>
             </td>
           </tr>
+          <tr v-if="userList.length === 0">
+            <td colspan="6" class="empty-cell">暂无数据</td>
+          </tr>
         </tbody>
       </table>
 
-      <!-- 分页组件 -->
+      <!-- 分页 -->
       <Pagination
         :total="total"
         :current="currentPage"
         :page-size="pageSize"
-        @update:current="currentPage = $event"
+        @update:current="handlePageChange"
       />
-    </section>
+    </div>
 
     <!-- 新增/编辑用户弹窗 -->
-    <FormDialog
+    <el-dialog
       v-model="dialogVisible"
-      :title="dialogTitle"
-      subtitle="填写用户基础信息"
-      :fields="userFields"
-      :form-data="formData"
-      :show-avatar="isEdit"
-      avatar-field="avatar"
-      @submit="handleSubmit"
+      width="760px"
+      class="user-dialog"
+      :show-close="false"
       @close="handleCloseDialog"
-    />
+    >
+      <template #header>
+        <div class="dialog-header">
+          <div>
+            <h2>{{ dialogTitle }}</h2>
+            <p>填写用户基础信息</p>
+          </div>
+          <div class="close-btn" @click="handleCloseDialog">
+            <el-icon><Close /></el-icon>
+          </div>
+        </div>
+      </template>
+
+      <div class="dialog-content">
+        <div class="form-grid">
+          <!-- 用户名 -->
+          <div class="form-item fullWidth">
+            <label>用户名 <span class="required">*</span></label>
+            <input
+              v-model="localFormData.username"
+              type="text"
+              placeholder="请输入用户名"
+              :class="{ 'error-input': errors.username }"
+              @input="clearError('username')"
+            />
+            <span v-if="errors.username" class="error-tip">{{ errors.username }}</span>
+          </div>
+
+          <!-- 用户昵称 -->
+          <div class="form-item fullWidth">
+            <label>用户昵称</label>
+            <input
+              v-model="localFormData.nickname"
+              type="text"
+              placeholder="请输入用户昵称"
+            />
+          </div>
+
+          <!-- 手机号码 -->
+          <div class="form-item fullWidth">
+            <label>手机号码 <span class="required">*</span></label>
+            <input
+              v-model="localFormData.phone"
+              type="text"
+              placeholder="请输入手机号码"
+              :class="{ 'error-input': errors.phone }"
+              @input="clearError('phone')"
+            />
+            <span v-if="errors.phone" class="error-tip">{{ errors.phone }}</span>
+          </div>
+
+          <!-- 用户类型 -->
+          <div class="form-item">
+            <label>用户类型</label>
+            <select v-model="localFormData.user_type">
+              <option :value="1">普通用户</option>
+              <option :value="2">管理员</option>
+            </select>
+          </div>
+
+          <!-- 账号状态 -->
+          <div class="form-item">
+            <label>状态</label>
+            <select v-model="localFormData.status">
+              <option :value="1">正常</option>
+              <option :value="0">冻结</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <button class="cancel-btn" @click="handleCloseDialog">取消</button>
+          <button class="submit-btn" @click="handleSubmit">保存</button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, computed } from 'vue'
-import { Plus, Search, Filter, User, DataAnalysis, WarningFilled } from '@element-plus/icons-vue'
-import Pagination from '../../../components/Pagination.vue'
-import FormDialog from '../../../components/FormDialog.vue'
-
-// 分页相关
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(68)
-
-// 弹窗相关
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const currentUserId = ref(null)
-
-// 弹窗标题
-const dialogTitle = computed(() => (isEdit.value ? '编辑用户' : '新增用户'))
-
-// 表单字段配置
-const userFields = [
-  {
-    label: '用户昵称',
-    prop: 'name',
-    type: 'input',
-    placeholder: '请输入用户昵称'
-  },
-  {
-    label: '手机号码',
-    prop: 'phone',
-    type: 'input',
-    placeholder: '请输入手机号码'
-  },
-  {
-    label: '邮箱地址',
-    prop: 'email',
-    type: 'input',
-    placeholder: '请输入邮箱地址'
-  },
-  {
-    label: '账号状态',
-    prop: 'status',
-    type: 'select',
-    options: ['正常', '冻结']
-  },
-  {
-    label: '备注信息',
-    prop: 'remark',
-    type: 'textarea',
-    fullWidth: true,
-    rows: 4,
-    placeholder: '请输入备注内容'
-  }
-]
-
-// 表单数据
-const formData = reactive({
-  name: '',
-  phone: '',
-  email: '',
-  status: '正常',
-  remark: '',
-  avatar: ''
-})
-
-// 用户列表数据
-const userList = ref([
-  {
-    id: 1,
-    name: '张小明',
-    email: 'zhang@example.com',
-    phone: '138****1234',
-    status: '正常',
-    registerTime: '2024-06-01',
-    lastLogin: '2024-06-07 10:30',
-    avatar: 'https://randomuser.me/api/portraits/men/11.jpg',
-    remark: '活跃用户'
-  },
-  {
-    id: 2,
-    name: '李雪',
-    email: 'li@example.com',
-    phone: '139****5678',
-    status: '正常',
-    registerTime: '2024-05-20',
-    lastLogin: '2024-06-07 08:12',
-    avatar: 'https://randomuser.me/api/portraits/women/12.jpg',
-    remark: 'VIP会员'
-  },
-  {
-    id: 3,
-    name: '王强',
-    email: 'wang@example.com',
-    phone: '156****9999',
-    status: '冻结',
-    registerTime: '2024-05-11',
-    lastLogin: '2024-06-05 18:20',
-    avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
-    remark: '违规操作冻结'
-  }
-])
-
-// 打开新增弹窗
-const openAddDialog = () => {
-  isEdit.value = false
-  currentUserId.value = null
-  // 重置表单
-  formData.name = ''
-  formData.phone = ''
-  formData.email = ''
-  formData.status = '正常'
-  formData.remark = ''
-  formData.avatar = ''
-  dialogVisible.value = true
-}
-
-// 打开编辑弹窗
-const openEditDialog = (user) => {
-  isEdit.value = true
-  currentUserId.value = user.id
-  // 填充表单
-  formData.name = user.name
-  formData.phone = user.phone
-  formData.email = user.email
-  formData.status = user.status
-  formData.remark = user.remark || ''
-  formData.avatar = user.avatar
-  dialogVisible.value = true
-}
-
-// 提交表单
-const handleSubmit = (data) => {
-  if (isEdit.value) {
-    // 编辑用户
-    const index = userList.value.findIndex((u) => u.id === currentUserId.value)
-    if (index !== -1) {
-      userList.value[index] = {
-        ...userList.value[index],
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-        status: data.status,
-        remark: data.remark
-      }
-    }
-  } else {
-    // 新增用户
-    const newUser = {
-      id: Date.now(),
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      status: data.status,
-      registerTime: new Date().toISOString().slice(0, 10),
-      lastLogin: '-',
-      avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 50) + 1}.jpg`,
-      remark: data.remark
-    }
-    userList.value.unshift(newUser)
-    total.value++
-  }
-  dialogVisible.value = false
-}
-
-// 删除用户
-const handleDelete = (item) => {
-  if (confirm(`确定要删除用户「${item.name}」吗？`)) {
-    const index = userList.value.findIndex((u) => u.id === item.id)
-    if (index !== -1) {
-      userList.value.splice(index, 1)
-      total.value--
-    }
-  }
-}
-
-// 关闭弹窗
-const handleCloseDialog = () => {
-  // 重置表单
-  formData.name = ''
-  formData.phone = ''
-  formData.email = ''
-  formData.status = '正常'
-  formData.remark = ''
-  formData.avatar = ''
-}
-</script>
-
 <style scoped>
-.user-manage {
-  margin-top: 24px;
+.page-container {
+  width: 100%;
 }
 
-/* 统计卡片 */
-.stats-wrapper {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stats-card {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 26px;
+/* 页面头部 */
+.page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  justify-content: space-between;
+  margin-bottom: 28px;
 }
 
-.stats-left p {
-  font-size: 14px;
+.page-header h2 {
+  font-size: 30px;
+  color: #14263f;
+}
+
+.page-header p {
+  margin-top: 6px;
   color: #94a3b8;
 }
 
-.stats-left h2 {
+.add-btn {
+  height: 46px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 14px;
+  background: #18b57d;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.add-btn:hover {
+  background: #0e9f6e;
+}
+
+/* 数据统计 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stats-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid #f1f5f9;
+}
+
+.stats-card p {
+  color: #94a3b8;
+}
+
+.stats-card h2 {
+  margin-top: 10px;
   font-size: 34px;
   color: #14263f;
-  margin-top: 10px;
 }
 
-.stats-left span {
+.stats-card span {
   display: inline-block;
   margin-top: 10px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.up {
   color: #18b57d;
 }
 
-.down {
-  color: #ff5d5d;
+.danger {
+  color: #ff5d5d !important;
 }
 
-.stats-icon {
-  width: 62px;
-  height: 62px;
+.icon {
+  width: 60px;
+  height: 60px;
   border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.stats-icon .el-icon {
+.icon .el-icon {
   font-size: 28px;
 }
 
@@ -411,54 +599,44 @@ const handleCloseDialog = () => {
 
 /* 表格区域 */
 .table-wrapper {
-  background: #ffffff;
+  margin-top: 28px;
+  background: #fff;
   border-radius: 28px;
-  padding: 26px;
+  padding: 24px;
   border: 1px solid #f1f5f9;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
 }
 
-.table-header {
+.table-toolbar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
+  margin-bottom: 24px;
 }
 
-.header-left h3 {
-  font-size: 24px;
-  color: #14263f;
-  margin-bottom: 20px;
-}
-
-.filter-group {
+.filters {
   display: flex;
-  align-items: center;
   gap: 14px;
+  align-items: center;
 }
 
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.search-box {
+  width: 260px;
+  height: 42px;
   background: #f8fafc;
   border-radius: 14px;
-  padding: 0 16px;
-  height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
   border: 1px solid #eef2f6;
   transition: all 0.2s;
 }
 
-.filter-item:focus-within {
+.search-box:focus-within {
   border-color: #18b57d;
-  box-shadow: 0 0 0 2px rgba(24, 181, 125, 0.1);
 }
 
-.filter-item .el-icon {
-  color: #94a3b8;
-  font-size: 18px;
-}
-
-.filter-item input {
+.search-box input {
   border: none;
   outline: none;
   background: transparent;
@@ -467,77 +645,64 @@ const handleCloseDialog = () => {
   color: #334155;
 }
 
-.filter-item input::placeholder {
+.search-box input::placeholder {
   color: #cbd5e1;
 }
 
-/* 下拉框样式 */
-.status-select {
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  color: #334155;
-  cursor: pointer;
-  padding-right: 4px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+.search-box .el-icon {
+  color: #94a3b8;
+  font-size: 18px;
 }
 
-.status-select option {
-  color: #334155;
-  background: #ffffff;
-  padding: 8px;
-}
-
-.status-select:focus {
-  outline: none;
-  border: none;
-}
-
-.add-btn {
+.select {
   height: 42px;
-  padding: 0 22px;
-  border: none;
   border-radius: 14px;
-  background: #18b57d;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  border: 1px solid #e2e8f0;
+  padding: 0 14px;
+  background: #fff;
   cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  outline: none;
+}
+
+.select:focus {
+  border-color: #18b57d;
+}
+
+.reset-btn {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 14px;
   transition: all 0.2s;
 }
 
-.add-btn:hover {
-  background: #0e9f6e;
+.reset-btn:hover {
+  border-color: #18b57d;
+  color: #18b57d;
 }
 
 /* 表格 */
 .user-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 30px;
-}
-
-.user-table thead tr {
-  background: #f8fafc;
-  border-radius: 16px;
 }
 
 .user-table th {
-  padding: 18px 16px;
+  background: #f8fafc;
+  padding: 18px;
   text-align: left;
-  font-size: 14px;
   color: #64748b;
   font-weight: 600;
 }
 
 .user-table td {
-  padding: 20px 16px;
+  padding: 20px 18px;
   border-bottom: 1px solid #f1f5f9;
   font-size: 14px;
   color: #334155;
@@ -550,47 +715,73 @@ const handleCloseDialog = () => {
 }
 
 .user-info img {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
 }
 
 .user-info h4 {
-  font-size: 15px;
   color: #14263f;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin: 0;
 }
 
 .user-info p {
+  margin-top: 4px;
   color: #94a3b8;
   font-size: 13px;
 }
 
-/* 状态标签 */
-.status-tag {
+.empty-cell {
+  text-align: center;
+  color: #94a3b8;
+  padding: 48px !important;
+}
+
+/* 用户类型标签 */
+.type-tag {
   display: inline-block;
-  padding: 5px 12px;
+  padding: 6px 12px;
   border-radius: 30px;
   font-size: 12px;
   font-weight: 500;
 }
 
-.success {
+.type-tag.normal {
+  background: rgba(74, 140, 255, 0.1);
+  color: #4a8cff;
+}
+
+.type-tag.admin {
+  background: rgba(255, 159, 67, 0.12);
+  color: #ff9f43;
+}
+
+/* 状态标签 */
+.status-tag {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-tag.success {
   background: rgba(24, 181, 125, 0.1);
   color: #18b57d;
 }
 
-.danger {
+.status-tag.danger {
   background: rgba(255, 93, 93, 0.1);
   color: #ff5d5d;
 }
 
 /* 操作按钮 */
-.action-group {
+.actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .edit-btn,
@@ -598,8 +789,8 @@ const handleCloseDialog = () => {
   border: none;
   background: transparent;
   cursor: pointer;
+  font-weight: 600;
   font-size: 13px;
-  font-weight: 500;
   padding: 4px 8px;
   border-radius: 8px;
   transition: all 0.2s;
@@ -621,42 +812,188 @@ const handleCloseDialog = () => {
   background: rgba(255, 93, 93, 0.1);
 }
 
+/* ==================== 弹窗样式 ==================== */
+.user-dialog :deep(.el-dialog) {
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+.user-dialog :deep(.el-dialog__header) {
+  margin-right: 0;
+  padding: 0;
+}
+
+.user-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.user-dialog :deep(.el-dialog__footer) {
+  padding: 0;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dialog-header h2 {
+  font-size: 28px;
+  color: #14263f;
+  margin: 0;
+}
+
+.dialog-header p {
+  margin-top: 6px;
+  color: #94a3b8;
+}
+
+.close-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  background: #eef2f7;
+}
+
+.dialog-content {
+  padding: 30px 32px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-item.fullWidth {
+  grid-column: span 2;
+}
+
+.form-item label {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #334155;
+  font-weight: 600;
+}
+
+.form-item .required {
+  color: #ff5d5d;
+}
+
+.form-item input,
+.form-item select {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 16px;
+  padding: 0 16px;
+  font-size: 14px;
+  transition: 0.2s;
+  font-family: inherit;
+  height: 48px;
+}
+
+.form-item input:focus,
+.form-item select:focus {
+  border-color: #18b57d;
+  outline: none;
+}
+
+.form-item .error-input {
+  border-color: #ff5d5d;
+}
+
+.form-item .error-input:focus {
+  border-color: #ff5d5d;
+}
+
+.error-tip {
+  font-size: 12px;
+  color: #ff5d5d;
+  margin-top: 6px;
+}
+
+.dialog-footer {
+  padding: 24px 32px 30px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.cancel-btn,
+.submit-btn {
+  height: 46px;
+  padding: 0 28px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.cancel-btn {
+  border: 1px solid #dbe3ec;
+  background: #fff;
+  color: #64748b;
+}
+
+.cancel-btn:hover {
+  background: #f8fafc;
+}
+
+.submit-btn {
+  border: none;
+  background: #18b57d;
+  color: #fff;
+}
+
+.submit-btn:hover {
+  opacity: 0.92;
+}
+
 /* 响应式 */
 @media (max-width: 1200px) {
-  .stats-wrapper {
+  .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 900px) {
-  .table-header {
-    flex-direction: column;
-    gap: 20px;
-    align-items: flex-start;
-  }
-  .filter-group {
+  .filters {
     flex-wrap: wrap;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-item.fullWidth {
+    grid-column: span 1;
   }
 }
 
 @media (max-width: 768px) {
-  .stats-wrapper {
+  .stats-grid {
     grid-template-columns: 1fr;
   }
   .user-table {
     font-size: 12px;
-  }
-  .user-table th,
-  .user-table td {
-    padding: 12px 8px;
-  }
-  .user-info img {
-    width: 32px;
-    height: 32px;
-  }
-  .action-group {
-    flex-direction: column;
-    gap: 4px;
+    overflow-x: auto;
+    display: block;
   }
 }
 </style>

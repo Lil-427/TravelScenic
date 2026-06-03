@@ -24,7 +24,18 @@
       "Bash(mv admin-order-temp.vue AdminOrder.vue)",
       "Bash(mv admin-comment.vue admin-comment-temp.vue)",
       "Bash(mv admin-comment-temp.vue AdminComment.vue)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(pnpm dev *)",
+      "Bash(pnpm install *)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh repo *)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/meiwenzhuanjia/tourism-management-system/main/README.md\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(npx vite *)"
     ]
   }
 }

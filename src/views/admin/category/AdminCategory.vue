@@ -21,6 +21,10 @@ const currentPage = ref(1)
 const pageSize = ref(5)
 const total = ref(0)
 
+// ==================== 统计数据 ====================
+const grandTotal = ref(0)
+const disabledCount = ref(0)
+
 // ==================== 弹窗相关 ====================
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -91,16 +95,36 @@ const fetchCategoryList = async () => {
     page: currentPage.value,
     size: pageSize.value
   }
-  // 状态筛选
   if (statusFilter.value === '启用中') {
     params.status = 1
   } else if (statusFilter.value === '已禁用') {
     params.status = 0
   }
+  if (searchKeyword.value) {
+    params.keyword = searchKeyword.value
+  }
   const res = await getCategoryList(params)
   if (res.code === 200) {
     categoryList.value = res.data.list
     total.value = res.data.total
+  }
+}
+
+const fetchGrandTotal = async () => {
+  try {
+    const res = await getCategoryList({ page: 1, size: 1 })
+    grandTotal.value = res.data.total
+  } catch (error) {
+    console.log('获取总数失败', error)
+  }
+}
+
+const fetchStats = async () => {
+  try {
+    const res = await getCategoryList({ page: 1, size: 1, status: 0 })
+    disabledCount.value = res.data.total
+  } catch (error) {
+    console.log('获取统计失败', error)
   }
 }
 
@@ -122,6 +146,8 @@ const handleSubmit = async (data) => {
 
     dialogVisible.value = false
     fetchCategoryList()
+    fetchGrandTotal()
+    fetchStats()
   } catch (error) {
     console.error('操作失败', error)
   }
@@ -137,6 +163,8 @@ const handleDelete = async (item) => {
         currentPage.value--
       }
       fetchCategoryList()
+      fetchGrandTotal()
+      fetchStats()
     }
   } catch (error) {
     console.error('删除失败', error)
@@ -170,6 +198,8 @@ const resetFilters = () => {
 // ==================== 生命周期 ====================
 
 onMounted(() => {
+  fetchGrandTotal()
+  fetchStats()
   fetchCategoryList()
 })
 </script>
@@ -182,10 +212,6 @@ onMounted(() => {
         <h2>景区分类</h2>
         <p>管理平台景区分类体系与展示内容</p>
       </div>
-      <button class="add-btn" @click="openAddDialog">
-        <el-icon><Plus /></el-icon>
-        新增分类
-      </button>
     </div>
 
     <!-- ==================== 数据统计卡片 ==================== -->
@@ -194,7 +220,7 @@ onMounted(() => {
       <div class="stats-card">
         <div>
           <p>分类总数</p>
-          <h2>{{ total }}</h2>
+          <h2>{{ grandTotal }}</h2>
           <span>+2%</span>
         </div>
         <div class="icon green">
@@ -230,7 +256,7 @@ onMounted(() => {
       <div class="stats-card">
         <div>
           <p>禁用分类</p>
-          <h2>{{ categoryList.filter((item) => item.status === 0).length }}</h2>
+          <h2>{{ disabledCount }}</h2>
           <span class="danger">未展示</span>
         </div>
         <div class="icon red">
@@ -247,7 +273,7 @@ onMounted(() => {
           <!-- 搜索框 -->
           <div class="search-box">
             <el-icon><Search /></el-icon>
-            <input v-model="searchKeyword" placeholder="搜索分类名称" />
+            <input v-model="searchKeyword" placeholder="搜索分类名称" @keyup.enter="handleSearch" />
           </div>
           <!-- 状态下拉框 -->
           <select v-model="statusFilter" class="select" @change="handleStatusChange">
@@ -258,6 +284,11 @@ onMounted(() => {
           <!-- 重置按钮 -->
           <button class="reset-btn" @click="resetFilters">重置</button>
         </div>
+
+        <button class="add-btn" @click="openAddDialog">
+          <el-icon><Plus /></el-icon>
+          新增分类
+        </button>
       </div>
 
       <!-- 数据表格 -->
@@ -460,7 +491,11 @@ onMounted(() => {
 
 /* 筛选工具栏 */
 .table-toolbar {
-  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .filters {

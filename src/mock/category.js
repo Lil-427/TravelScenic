@@ -130,6 +130,7 @@ let categoryList = [
 Mock.mock(/\/admin\/category\/list/, 'get', (options) => {
   const url = new URL(options.url, 'http://localhost')
   const status = url.searchParams.get('status')
+  const keyword = url.searchParams.get('keyword')
   const page = Number(url.searchParams.get('page')) || 1
   const size = Number(url.searchParams.get('size')) || 10
 
@@ -137,6 +138,10 @@ Mock.mock(/\/admin\/category\/list/, 'get', (options) => {
 
   if (status !== null) {
     list = list.filter((item) => item.status === Number(status))
+  }
+
+  if (keyword) {
+    list = list.filter((item) => item.category_name.includes(keyword))
   }
 
   const total = list.length

@@ -24,7 +24,11 @@
       "Bash(mv admin-order-temp.vue AdminOrder.vue)",
       "Bash(mv admin-comment.vue admin-comment-temp.vue)",
       "Bash(mv admin-comment-temp.vue AdminComment.vue)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(cd \"c:/Users/hhp/Desktop/旅游管理项目/TravelScenic\" && rm -rf node_modules/.vite && echo \"Vite 缓存已清除\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\hhp\\Desktop\\旅游管理项目\\TravelScenic\\node_modules\\.vite"
     ]
   }
 }

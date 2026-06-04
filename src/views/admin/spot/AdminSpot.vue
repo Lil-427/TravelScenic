@@ -613,7 +613,7 @@ const handleDelete = async (item) => {
 }
 
 /* 页面头部 */
-page-header {
+.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;

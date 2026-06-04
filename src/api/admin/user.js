@@ -24,38 +24,3 @@ export const updateUserStatus = (data) => {
   })
 }
 
-/**
- * 新增用户
- * @param {Object} data - { username, nickname, phone, user_type, status }
- */
-export const addUser = (data) => {
-  return request({
-    url: '/admin/user/add',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 更新用户信息
- * @param {number} id - 用户ID
- * @param {Object} data - { username, nickname, phone, user_type, status }
- */
-export const updateUser = (id, data) => {
-  return request({
-    url: `/admin/user/update/${id}`,
-    method: 'put',
-    data
-  })
-}
-
-/**
- * 删除用户
- * @param {number} id - 用户ID
- */
-export const deleteUser = (id) => {
-  return request({
-    url: `/admin/user/delete/${id}`,
-    method: 'delete'
-  })
-}

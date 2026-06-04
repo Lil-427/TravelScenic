@@ -59,7 +59,7 @@ import {
   UserFilled,
   Bell
 } from '@element-plus/icons-vue'
-import sidebarBg from '@/assets/sidebar-watercolor1.png'
+import sidebarBg from '@/assets/sidebar-watercolor.png'
 
 const menuItems = [
   { name: 'adminDashboard', label: '首页', icon: House },

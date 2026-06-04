@@ -105,28 +105,33 @@ const userList = [
 ]
 
 /**
- * 获取用户列表（支持分页、全局模糊搜索、状态筛选）
+ * 获取用户列表（支持分页、用户名筛选、手机号筛选）
  * GET /admin/user/list
  */
 Mock.mock(/\/admin\/user\/list(\?.*)?$/, 'get', (options) => {
   const url = new URL(options.url, 'http://localhost')
 
-  const keyword = url.searchParams.get('keyword')
+  const username = url.searchParams.get('username')
+  const phone = url.searchParams.get('phone')
   const status = url.searchParams.get('status')
   const page = Number(url.searchParams.get('page')) || 1
   const size = Number(url.searchParams.get('size')) || 10
 
   let list = [...userList]
 
-  // 全局模糊搜索：用户名、昵称、手机号
-  if (keyword) {
-    const kw = keyword.toLowerCase()
-    list = list.filter(
-      (item) =>
-        item.username.toLowerCase().includes(kw) ||
-        item.nickname.toLowerCase().includes(kw) ||
-        item.phone.includes(kw)
-    )
+  // 用户名 / 手机号筛选（OR 逻辑，任一匹配即可）
+  if (username || phone) {
+    list = list.filter((item) => {
+      let match = true
+      if (username) {
+        const kw = username.toLowerCase()
+        match = item.username.toLowerCase().includes(kw) || item.nickname.toLowerCase().includes(kw)
+      }
+      if (phone) {
+        match = match || item.phone.includes(phone)
+      }
+      return match
+    })
   }
 
   // 状态筛选
@@ -149,34 +154,6 @@ Mock.mock(/\/admin\/user\/list(\?.*)?$/, 'get', (options) => {
       page,
       size
     }
-  }
-})
-
-/**
- * 新增用户
- * POST /admin/user/add
- */
-Mock.mock(/\/admin\/user\/add$/, 'post', (options) => {
-  const body = JSON.parse(options.body)
-  const newId = userList.length > 0 ? Math.max(...userList.map((u) => u.id)) + 1 : 1
-
-  const gender = Math.random() > 0.5 ? 'men' : 'women'
-  const newItem = {
-    id: newId,
-    username: body.username,
-    nickname: body.nickname || '',
-    phone: body.phone,
-    avatar: `https://randomuser.me/api/portraits/${gender}/${Math.floor(Math.random() * 50) + 1}.jpg`,
-    user_type: body.user_type || 1,
-    status: body.status !== undefined ? body.status : 1,
-    create_time: new Date().toISOString().replace('T', ' ').slice(0, 19)
-  }
-  userList.unshift(newItem)
-
-  return {
-    code: 200,
-    message: '添加成功',
-    data: { id: newItem.id }
   }
 })
 
@@ -205,48 +182,3 @@ Mock.mock(/\/admin\/user\/update\/status$/, 'put', (options) => {
   }
 })
 
-/**
- * 更新用户信息
- * PUT /admin/user/update/:id
- */
-Mock.mock(/\/admin\/user\/update\/\d+$/, 'put', (options) => {
-  const id = Number(options.url.match(/\/update\/(\d+)/)[1])
-  const body = JSON.parse(options.body)
-  const index = userList.findIndex((item) => item.id === id)
-
-  if (index !== -1) {
-    userList[index] = { ...userList[index], ...body }
-    return {
-      code: 200,
-      message: '修改成功',
-      data: userList[index]
-    }
-  }
-
-  return {
-    code: 404,
-    message: '用户不存在'
-  }
-})
-
-/**
- * 删除用户
- * DELETE /admin/user/delete/:id
- */
-Mock.mock(/\/admin\/user\/delete\/\d+$/, 'delete', (options) => {
-  const id = Number(options.url.match(/\/delete\/(\d+)/)[1])
-  const index = userList.findIndex((item) => item.id === id)
-
-  if (index !== -1) {
-    userList.splice(index, 1)
-    return {
-      code: 200,
-      message: '删除成功'
-    }
-  }
-
-  return {
-    code: 404,
-    message: '用户不存在'
-  }
-})

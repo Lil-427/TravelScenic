@@ -70,13 +70,13 @@
             <input placeholder="搜索管理员账号" />
           </div>
           <el-select size="large" style="width: 150px" placeholder="全部角色">
-            <el-option label="全部角色" value="全部角色" />
+            <el-option label="全部角色" value="" />
             <el-option label="超级管理员" value="超级管理员" />
             <el-option label="运营管理员" value="运营管理员" />
             <el-option label="审核管理员" value="审核管理员" />
           </el-select>
           <el-select size="large" style="width: 130px" placeholder="全部状态">
-            <el-option label="全部状态" value="全部状态" />
+            <el-option label="全部状态" value="" />
             <el-option label="正常" value="正常" />
             <el-option label="已禁用" value="已禁用" />
           </el-select>
@@ -607,11 +607,11 @@ const handleCloseDialog = () => {
 }
 
 .edit-btn {
-  color: #18b57d;
+  color: #4a8cff;
 }
 
 .edit-btn:hover {
-  background: rgba(24, 181, 125, 0.1);
+  background: rgba(74, 140, 255, 0.1);
 }
 
 .delete-btn {

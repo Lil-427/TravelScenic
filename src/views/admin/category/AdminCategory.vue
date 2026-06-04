@@ -32,7 +32,7 @@ const currentCategoryId = ref(null)
 
 // ==================== 筛选相关 ====================
 const searchKeyword = ref('')
-const statusFilter = ref('全部状态')
+const statusFilter = ref('')
 
 // ==================== 表单数据 ====================
 const formModel = reactive({
@@ -190,7 +190,7 @@ const handleStatusChange = () => {
 
 const resetFilters = () => {
   searchKeyword.value = ''
-  statusFilter.value = '全部状态'
+  statusFilter.value = ''
   currentPage.value = 1
   fetchCategoryList()
 }
@@ -277,7 +277,7 @@ onMounted(() => {
           </div>
           <!-- 状态下拉框 -->
           <el-select v-model="statusFilter" size="large" style="width: 130px" placeholder="全部状态" @change="handleStatusChange">
-            <el-option label="全部状态" value="全部状态" />
+            <el-option label="全部状态" value="" />
             <el-option label="启用中" value="启用中" />
             <el-option label="已禁用" value="已禁用" />
           </el-select>
@@ -620,11 +620,11 @@ onMounted(() => {
 }
 
 .edit-btn {
-  color: #18b57d;
+  color: #4a8cff;
 }
 
 .edit-btn:hover {
-  background: rgba(24, 181, 125, 0.1);
+  background: rgba(74, 140, 255, 0.1);
 }
 
 .delete-btn {

@@ -70,13 +70,13 @@
             <input placeholder="搜索订单号/用户" />
           </div>
           <el-select size="large" style="width: 130px" placeholder="全部状态">
-            <el-option label="全部状态" value="全部状态" />
+            <el-option label="全部状态" value="" />
             <el-option label="已支付" value="已支付" />
             <el-option label="待支付" value="待支付" />
             <el-option label="已取消" value="已取消" />
           </el-select>
           <el-select size="large" style="width: 130px" placeholder="全部景区">
-            <el-option label="全部景区" value="全部景区" />
+            <el-option label="全部景区" value="" />
             <el-option label="九寨沟" value="九寨沟" />
             <el-option label="黄山" value="黄山" />
             <el-option label="西湖" value="西湖" />

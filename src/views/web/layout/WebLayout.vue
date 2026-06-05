@@ -19,6 +19,7 @@
         <router-link to="/strategy" class="nav-item" active-class="active"> 攻略 </router-link>
         <router-link to="/search" class="nav-item" active-class="active"> 搜索 </router-link>
         <router-link to="/profile" class="nav-item" active-class="active"> 个人中心 </router-link>
+        <router-link to="/notice" class="nav-item" active-class="active"> 公告 </router-link>
       </div>
 
       <div class="header-right">

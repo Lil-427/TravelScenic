@@ -12,6 +12,8 @@ import Strategy from '../views/web/strategy/Strategy.vue'
 import Search from '../views/web/search/Search.vue'
 import SpotDetail from '../views/web/spot-detail/SpotDetail.vue'
 import StrategyDetail from '../views/web/strategy/StrategyDetail.vue'
+import NoticeList from '@/views/web/notice/NoticeList.vue'
+import NoticeDetail from '@/views/web/notice/NoticeDetail.vue'
 
 // 个人中心
 import Profile from '../views/web/profile/Profile.vue'
@@ -56,6 +58,9 @@ const routes = [
       { path: 'strategy/:id', name: 'StrategyDetail', component: StrategyDetail },
       { path: 'search', name: 'Search', component: Search },
       { path: 'detail/:id', name: 'SpotDetail', component: SpotDetail },
+      // 公告列表和详情页直
+      { path: 'notice', name: 'NoticeList', component: NoticeList },
+      { path: 'notice/detail/:id', name: 'NoticeDetail', component: NoticeDetail },
       {
         path: 'profile',
         component: Profile,

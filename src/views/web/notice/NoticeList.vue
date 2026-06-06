@@ -102,12 +102,7 @@ const getList = async () => {
 
     console.log('公告列表接口返回：', res)
 
-    /**
-     * 兼容两种返回情况：
-     * 1. request 已经拦截过：res.data 是真正数据
-     * 2. axios 原始返回：res.data.data 是真正数据
-     */
-    const data = res.data?.data || res.data || res || {}
+    const data = res.data || {}
 
     noticeList.value = data.list || []
     total.value = data.total || 0
